@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="NOAA_HIRS_Decoder">
+    <output-path>$PROJECT_DIR$/out/artifacts/NOAA_HIRS_Decoder</output-path>
+    <root id="archive" name="NOAA_HIRS_Decoder.jar">
+      <element id="module-output" name="NOAA_HIRS_Decoder" />
+    </root>
+  </artifact>
+</component>
