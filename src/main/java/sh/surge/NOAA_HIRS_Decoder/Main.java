@@ -44,15 +44,15 @@ import java.util.concurrent.TimeUnit;
 
 public class Main {
     private static final int[] COLUMNS = {17, 18, 23, 24, 27, 28, 31, 32, 35, 36, 39, 40, 43, 44, 55, 56, 59, 60, 63, 64, 67, 68, 71, 72, 75, 76, 79, 80, 83, 84, 85, 86, 89, 90, 93, 94};
-    private static ArrayList<String> frames = new ArrayList<>();
-    private static ArrayList<Integer> frmCnt = new ArrayList<>();
-    private static ArrayList<String> framePixels = new ArrayList<>();
-    private static ArrayList<Integer> starts = new ArrayList<>();
-    private static ArrayList<Integer> mirrorPos = new ArrayList<>();
-    private static XSSFWorkbook workbook = new XSSFWorkbook();
-    private static ArrayList<Integer> majorFrmCnt = new ArrayList<>();
-    private static ArrayList<int[]> missingLinesList = new ArrayList<>();
-    private static ArrayList<String[]> timeList = new ArrayList<>();
+    private static final ArrayList<String> frames = new ArrayList<>();
+    private static final ArrayList<Integer> frmCnt = new ArrayList<>();
+    private static final ArrayList<String> framePixels = new ArrayList<>();
+    private static final ArrayList<Integer> starts = new ArrayList<>();
+    private static final ArrayList<Integer> mirrorPos = new ArrayList<>();
+    private static final XSSFWorkbook workbook = new XSSFWorkbook();
+    private static final ArrayList<Integer> majorFrmCnt = new ArrayList<>();
+    private static final ArrayList<int[]> missingLinesList = new ArrayList<>();
+    private static final ArrayList<String[]> timeList = new ArrayList<>();
 
     private static String input, saveType;
     private static boolean saveCompo, doHis, saveXlsx, saveMsa, saveTime, cloudHe, landHe, outName, compoName, hisName, xlsxName, msaName, timeName;
@@ -143,10 +143,11 @@ public class Main {
                     case NUMERIC:
                         value = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16));
 
-                        String add = "";
+                        StringBuilder addBuilder = new StringBuilder();
                         for (int o = 0; o < 8 - value.length(); o++) {
-                            add += "0";
+                            addBuilder.append("0");
                         }
+                        String add = addBuilder.toString();
                         value = add + value;
                         value = fb + value;
                         frmCnt.add(Integer.parseInt(value, 2));
@@ -154,9 +155,11 @@ public class Main {
                     case STRING:
                         value = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
                         add = "";
+                        StringBuilder addBuilder1 = new StringBuilder(add);
                         for (int o = 0; o < 8 - value.length(); o++) {
-                            add += "0";
+                            addBuilder1.append("0");
                         }
+                        add = addBuilder1.toString();
                         value = add + value;
                         value = fb + value;
                         frmCnt.add(Integer.parseInt(value, 2));
@@ -188,12 +191,12 @@ public class Main {
                         break;
                 }
 
-                String zer = "";
+                StringBuilder zer = new StringBuilder();
 
                 for (int o = 0; o < 8 - binMFC.length(); o++) {
-                    zer += "0";
+                    zer.append("0");
                 }
-                binMFC = zer + binMFC;
+                binMFC = zer.toString() + binMFC;
 
                 majorFrmCnt.add(Integer.parseInt(binMFC.substring(3, 6), 2));
 
@@ -205,20 +208,20 @@ public class Main {
                         switch (cell.getCellType()) {
                             case NUMERIC:
                                 String str = Integer.toBinaryString(Integer.parseInt(String.valueOf((int) cell.getNumericCellValue()), 16));
-                                String add = "";
+                                StringBuilder add = new StringBuilder();
                                 for (int o = 0; o < 8 - str.length(); o++) {
-                                    add += "0";
+                                    add.append("0");
                                 }
-                                str = add + str;
+                                str = add.toString() + str;
                                 stringBuilder.append(str);
                                 break;
                             case STRING:
                                 String str1 = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
-                                String add1 = "";
+                                StringBuilder add1 = new StringBuilder();
                                 for (int o = 0; o < 8 - str1.length(); o++) {
-                                    add1 += "0";
+                                    add1.append("0");
                                 }
-                                str1 = add1 + str1;
+                                str1 = add1.toString() + str1;
                                 stringBuilder.append(str1);
                                 break;
                         }
@@ -240,20 +243,20 @@ public class Main {
                             break;
                     }
                 }
-                String frame = "";
+                StringBuilder frame = new StringBuilder();
                 for (String hexFrame : hexFrames) {
                     int val = Integer.parseInt(hexFrame, 16);
                     String bin = Integer.toBinaryString(val);
-                    String add = "";
+                    StringBuilder add = new StringBuilder();
 
                     for (int o = 0; o < 8 - bin.length(); o++) {
-                        add += "0";
+                        add.append("0");
                     }
-                    bin = add + bin;
+                    bin = add.toString() + bin;
 
-                    frame += bin;
+                    frame.append(bin);
                 }
-                frames.add(frame);
+                frames.add(frame.toString());
                 hexFrames.clear();
                 rowNum++;
             }

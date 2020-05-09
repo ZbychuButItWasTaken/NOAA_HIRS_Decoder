@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.sf.launch4j:launch4j:core:3.12">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/sf/launch4j/launch4j/3.12/launch4j-3.12-core.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/sf/launch4j/launch4j/3.12/launch4j-3.12-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/sf/launch4j/launch4j/3.12/launch4j-3.12-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
