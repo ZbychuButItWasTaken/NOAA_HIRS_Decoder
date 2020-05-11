@@ -6,7 +6,7 @@
 
     <groupId>sh.surge.NOAA_HIRS_Decoder</groupId>
     <artifactId>NOAA_HIRS_Decoder</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -86,8 +86,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
@@ -133,6 +133,7 @@
             <plugin>
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
+                <version>1.7.25</version>
                 <executions>
                     <execution>
                         <id>l4j-clui</id>

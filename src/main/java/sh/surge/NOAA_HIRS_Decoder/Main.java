@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+
 public class Main {
     private static final int[] COLUMNS = {17, 18, 23, 24, 27, 28, 31, 32, 35, 36, 39, 40, 43, 44, 55, 56, 59, 60, 63, 64, 67, 68, 71, 72, 75, 76, 79, 80, 83, 84, 85, 86, 89, 90, 93, 94};
     private static final ArrayList<String> frames = new ArrayList<>();
@@ -64,10 +65,14 @@ public class Main {
     private static String timePath1, timePath2, timeFormat, timeLanguage;
     private static int landChannel, landThreshold, cloudsChannel, cloudThreshold, saveQuality, totalMissingLines;
     private static Color waterBase, landBase, cloudBase;
+    private static float landBri, waterBri, cloudBri;
 
 
     public static void main(String[] args) {
         readIni();
+
+        //TODO Read file from main() argument
+
         String name = "";
         try {
             System.out.println("Loading file....");
@@ -426,8 +431,27 @@ public class Main {
 
             }
 
+            //TODO Equalize missing pixels
+
+
+            BufferedImage avrImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_BGR);
+            Raster imgRaster = image.getRaster();
+            int[] pat = {0, 0, 0};
+
+            for (int i1 = 0; i1 < avrImg.getWidth() * avrImg.getHeight(); i1++) {
+                int px = i1 % 56;
+                int line = (i1 - px) / 56;
+                int av = getAverage(px, line, image, false);
+
+                if (Math.abs(imgRaster.getPixel(px, line, pat)[0] - av) > 30) {
+                    image.setRGB(px, line, new Color(av, av, av).getRGB());
+                }
+            }
+
             int num = getNum(i);
             String wav = getWav(i);
+
+            //TODO Histogram equalized composite
 
             if (saveCompo) {
                 if (num < 11) {
@@ -436,6 +460,9 @@ public class Main {
                     g.drawImage(image, (num - 11) * 56, image.getHeight(), null);
                 }
             }
+
+            //TODO change composite to 5x4
+
             if (outName) {
                 saveImg(out1 + name + out2 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, image);
             } else {
@@ -490,7 +517,7 @@ public class Main {
 
                 if (xlsxName) {
                     file = new File(xlsxP1 + name + xlsxP2 + name + ".xlsx");
-                }else{
+                } else {
                     file = new File(xlsxP1 + name + ".xlsx");
                 }
                 FileOutputStream out = new FileOutputStream(file);
@@ -503,7 +530,7 @@ public class Main {
         }
 
         try {
-            TimeUnit.SECONDS.sleep(3);
+            TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -601,14 +628,27 @@ public class Main {
                 int[] pixelDataCloud = rasterCloud.getPixel(x, line, pixelDataC);
                 //msaImg.setRGB(x,line,new Color(pixelDataLand[0],pixelDataLand[0],pixelDataLand[0]).getRGB());
 
-                msaImg.setRGB(x, line, new Color((int) (waterBase.getRed() * pixelDataLand[0] / 255f), (int) (waterBase.getGreen() * pixelDataLand[0] / 255f), (int) (waterBase.getBlue() * pixelDataLand[0] / 255f)).getRGB());
+                try {
+                    msaImg.setRGB(x, line, new Color((int) ((waterBase.getRed() * pixelDataLand[0] / 255f) * waterBri), (int) ((waterBase.getGreen() * pixelDataLand[0] / 255f) * waterBri), (int) ((waterBase.getBlue() * pixelDataLand[0] / 255f) * waterBri)).getRGB());
+                } catch (IllegalArgumentException e) {
+                    msaImg.setRGB(x, line, new Color((int) (waterBase.getRed() * pixelDataLand[0] / 255f), (int) (waterBase.getGreen() * pixelDataLand[0] / 255f), (int) (waterBase.getBlue() * pixelDataLand[0] / 255f)).getRGB());
+                }
 
                 //msaImg.setRGB(x, line, new Color(0, 50, 200).getRGB());
                 if (pixelDataLand[0] > landThreshold) {
-                    msaImg.setRGB(x, line, new Color((int) (landBase.getRed() * pixelDataLand[0] / 255f), (int) (landBase.getGreen() * pixelDataLand[0] / 255f), (int) (landBase.getBlue() * pixelDataLand[0] / 255f)).getRGB());
+                    try {
+                        msaImg.setRGB(x, line, new Color((int) ((landBase.getRed() * pixelDataLand[0] / 255f) * landBri), (int) ((landBase.getGreen() * pixelDataLand[0] / 255f) * landBri), (int) ((landBase.getBlue() * pixelDataLand[0] / 255f) * landBri)).getRGB());
+                    } catch (IllegalArgumentException e) {
+                        msaImg.setRGB(x, line, new Color((int) (landBase.getRed() * pixelDataLand[0] / 255f), (int) (landBase.getGreen() * pixelDataLand[0] / 255f), (int) (landBase.getBlue() * pixelDataLand[0] / 255f)).getRGB());
+                    }
                 }
                 if (pixelDataCloud[0] > cloudThreshold) {
-                    msaImg.setRGB(x, line, new Color((int) (cloudBase.getRed() * pixelDataLand[0] / 255f), (int) (cloudBase.getGreen() * pixelDataLand[0] / 255f), (int) (cloudBase.getBlue() * pixelDataLand[0] / 255f)).getRGB());
+                    try {
+                        msaImg.setRGB(x, line, new Color((int) ((cloudBase.getRed() * pixelDataLand[0] / 255f) * cloudBri), (int) ((cloudBase.getGreen() * pixelDataLand[0] / 255f) * cloudBri), (int) ((cloudBase.getBlue() * pixelDataLand[0] / 255f) * cloudBri)).getRGB());
+                    } catch (IllegalArgumentException e) {
+                        msaImg.setRGB(x, line, new Color((int) (cloudBase.getRed() * pixelDataLand[0] / 255f), (int) (cloudBase.getGreen() * pixelDataLand[0] / 255f), (int) (cloudBase.getBlue() * pixelDataLand[0] / 255f)).getRGB());
+
+                    }
                 }
             }
         }
@@ -749,6 +789,10 @@ public class Main {
 
         String cColor = ini.get("msa", "cloud_base_color");
         cloudBase = new Color(Integer.parseInt(cColor.substring(0, 2), 16), Integer.parseInt(cColor.substring(2, 4), 16), Integer.parseInt(cColor.substring(4, 6), 16));
+
+        landBri = ini.get("msa", "land_brightening", float.class);
+        waterBri = ini.get("msa", "water_brightening", float.class);
+        cloudBri = ini.get("msa", "cloud_brightening", float.class);
 
         String timeS = ini.get("time", "save_time");
 
@@ -927,5 +971,63 @@ public class Main {
 
 
         return dateFormat.format(calendar.getTime());
+    }
+
+    private static int getAverage(int x, int line, BufferedImage image, boolean check) {
+        final int[] zero = {0, 0, 0};
+        int[] up;
+        int[] down;
+        int[] right;
+        int[] left;
+        int avVal = 0;
+        Raster imgRaster = image.getRaster();
+        ArrayList<int[]> pxToAv = new ArrayList<>();
+
+        if (line > 0 && !check) {
+            up = imgRaster.getPixel(x, line - 1, new int[]{0, 0, 0});
+            if (!Arrays.toString(up).equals(Arrays.toString(zero))) {
+                pxToAv.add(up);
+            }
+        }
+        if (line < image.getHeight() - 1) {
+            down = imgRaster.getPixel(x, line + 1, new int[]{0, 0, 0});
+            try {
+                if (!Arrays.toString(down).equals(Arrays.toString(zero)) /*&& Math.abs(getAverage(x, line - 1, image, true) - down[0]) > 30*/) {
+                    pxToAv.add(down);
+                }
+            }catch (ArrayIndexOutOfBoundsException e){
+                if (!Arrays.toString(down).equals(Arrays.toString(zero))) {
+                    pxToAv.add(down);
+                }
+            }
+        }
+        if (x > 0 && !check) {
+            left = imgRaster.getPixel(x - 1, line, new int[]{0, 0, 0});
+            if (!Arrays.toString(left).equals(Arrays.toString(zero))) {
+                pxToAv.add(left);
+            }
+        }
+        if (x < 55) {
+            right = imgRaster.getPixel(x + 1, line, new int[]{0, 0, 0});
+            try {
+                if (!Arrays.toString(right).equals(Arrays.toString(zero)) /*&& Math.abs(getAverage(x + 1, line, image, true) - right[0]) > 30*/) {
+                    pxToAv.add(right);
+                }
+            }catch (ArrayIndexOutOfBoundsException e){
+                if (!Arrays.toString(right).equals(Arrays.toString(zero))) {
+                    pxToAv.add(right);
+                }
+            }
+        }
+        int sum = 0;
+        for (int[] in : pxToAv) {
+            sum += in[0];
+        }
+        try {
+            avVal = sum / pxToAv.size();
+        } catch (ArithmeticException e) {
+            e.printStackTrace();
+        }
+        return avVal;
     }
 }
