@@ -53,11 +53,12 @@ public class Main {
     private static final XSSFWorkbook workbook = new XSSFWorkbook();
     private static final ArrayList<Integer> majorFrmCnt = new ArrayList<>();
     private static final ArrayList<int[]> missingLinesList = new ArrayList<>();
+    //todo check for missing majorframes
     private static final ArrayList<String[]> timeList = new ArrayList<>();
 
     private static String input, saveType;
-    private static boolean saveCompo, doHis, saveXlsx, saveMsa, saveTime, cloudHe, landHe, outName, compoName, hisName, xlsxName, msaName, timeName;
-    private static String compo1 = null, compo2 = null;
+    private static boolean saveCompo, doHis, saveXlsx, saveMsa, saveTime, cloudHe, landHe, outName, compoName, hisName, xlsxName, msaName, timeName, saveHisCombo, hisCompoName, averagePixels;
+    private static String compo1, compo2, hisCompo1, hisCompo2;
     private static String out1, out2;
     private static String hisPath1, hisPath2;
     private static String xlsxP1, xlsxP2;
@@ -66,475 +67,427 @@ public class Main {
     private static int landChannel, landThreshold, cloudsChannel, cloudThreshold, saveQuality, totalMissingLines;
     private static Color waterBase, landBase, cloudBase;
     private static float landBri, waterBri, cloudBri;
+    private static int compoSizeW, compoSizeH, hisCompoSizeW, hisCompoSizeH;
 
 
     public static void main(String[] args) {
-        readIni();
-
-        //TODO Read file from main() argument
-
-        String name = "";
         try {
-            System.out.println("Loading file....");
-            File inputFile = getLastModified(input);
+            //System.out.println(Arrays.toString(args));
+            readIni();
 
-            if (inputFile == null) {
-                System.out.println("No input file found. Aborting");
-                TimeUnit.SECONDS.sleep(5);
-                Runtime.getRuntime().exit(0);
-            }
-            System.out.println("Newest file found: " + inputFile.getName());
-            name = inputFile.getName().substring(0, inputFile.getName().length() - 4);
-            System.out.println("OK!" + '\n');
-            System.out.println("Converting data....");
-
-            XSSFSheet sheet = workbook.createSheet("Data");
-            int rownum = 0;
-
-            Scanner sc = new Scanner(inputFile);
-
-            while (sc.hasNextLine()) {
-                ArrayList<String> line = new ArrayList<>(Arrays.asList(sc.nextLine().split(" ")));
-                Row row = sheet.createRow(rownum++);
-                for (int i = 0; i < line.size(); i++) {
-                    Cell cell = row.createCell(i);
-                    cell.setCellValue(line.get(i));
-                }
-            }
-
-
-            ArrayList<String> hexFrames = new ArrayList<>();
-
-            System.out.println("OK!" + '\n');
-
-            System.out.println("Readnig data....");
-            // For each Row.
-            int rowNum = 0;
-            File tmp = new File("Time.tmp");
-            PrintWriter out = new PrintWriter(tmp);
-            if (saveTime) {
-                File timefile;
-                if (timeName) {
-                    timefile = new File(timePath1 + name + timePath2);
+            String name = "";
+            try {
+                System.out.println("Loading file....");
+                File inputFile;
+                if (args.length > 0) {
+                    inputFile = new File(args[0]);
+                    System.out.println("File loaded from argument path.");
                 } else {
-                    timefile = new File(timePath1);
-                }
-                if (timefile.mkdirs()) System.out.println("Directory created!");
-                if (timeName) {
-                    timefile = new File(timePath1 + name + timePath2 + "time.txt");
-                } else {
-                    timefile = new File(timePath1 + "time.txt");
-                }
-                out = new PrintWriter(timefile);
-            }
-            for (Row row : sheet) {
-                Cell cell = row.getCell(5);
-                char fb = '0';
-
-                switch (cell.getCellType()) {
-                    case NUMERIC:
-                        fb = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).length() - 1);
-                        break;
-                    case STRING:
-                        fb = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).length() - 1);
-                        break;
+                    inputFile = getLastModified(input);
+                    System.out.println("Loaded newest file.");
                 }
 
-                cell = row.getCell(6);
-
-                String value;
-
-                switch (cell.getCellType()) {
-                    case NUMERIC:
-                        value = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16));
-
-                        StringBuilder addBuilder = new StringBuilder();
-                        for (int o = 0; o < 8 - value.length(); o++) {
-                            addBuilder.append("0");
-                        }
-                        String add = addBuilder.toString();
-                        value = add + value;
-                        value = fb + value;
-                        frmCnt.add(Integer.parseInt(value, 2));
-                        break;
-                    case STRING:
-                        value = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
-                        add = "";
-                        StringBuilder addBuilder1 = new StringBuilder(add);
-                        for (int o = 0; o < 8 - value.length(); o++) {
-                            addBuilder1.append("0");
-                        }
-                        add = addBuilder1.toString();
-                        value = add + value;
-                        value = fb + value;
-                        frmCnt.add(Integer.parseInt(value, 2));
-                        break;
+                if (inputFile == null) {
+                    System.out.println("No input file found. Aborting");
+                    TimeUnit.SECONDS.sleep(5);
+                    Runtime.getRuntime().exit(0);
                 }
-                //System.out.println(frmCnt.get(frmCnt.size()-1));
+                System.out.println("Newest file found: " + inputFile.getName());
+                name = inputFile.getName().substring(0, inputFile.getName().length() - 4);
+                System.out.println("OK!" + '\n');
+                System.out.println("Converting data....");
 
+                XSSFSheet sheet = workbook.createSheet("Data");
+                int rownum = 0;
 
-                cell = row.getCell(17);
+                Scanner sc = new Scanner(inputFile);
 
-                switch (cell.getCellType()) {
-                    case NUMERIC:
-                        mirrorPos.add(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16));
-                        break;
-                    case STRING:
-                        mirrorPos.add(Integer.parseInt(cell.getStringCellValue(), 16));
-                        break;
-                }
-
-                cell = row.getCell(4);
-                String binMFC = "";
-
-                switch (cell.getCellType()) {
-                    case NUMERIC:
-                        binMFC = Integer.toBinaryString(Integer.parseInt(String.valueOf((int) cell.getNumericCellValue()), 16));
-                        break;
-                    case STRING:
-                        binMFC = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
-                        break;
-                }
-
-                StringBuilder zer = new StringBuilder();
-
-                for (int o = 0; o < 8 - binMFC.length(); o++) {
-                    zer.append("0");
-                }
-                binMFC = zer.toString() + binMFC;
-
-                majorFrmCnt.add(Integer.parseInt(binMFC.substring(3, 6), 2));
-
-                if (frmCnt.get(frmCnt.size() - 1) == 0) {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for (int i = 9; i < 14; i++) {
-                        cell = row.getCell(i);
-
-                        switch (cell.getCellType()) {
-                            case NUMERIC:
-                                String str = Integer.toBinaryString(Integer.parseInt(String.valueOf((int) cell.getNumericCellValue()), 16));
-                                StringBuilder add = new StringBuilder();
-                                for (int o = 0; o < 8 - str.length(); o++) {
-                                    add.append("0");
-                                }
-                                str = add.toString() + str;
-                                stringBuilder.append(str);
-                                break;
-                            case STRING:
-                                String str1 = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
-                                StringBuilder add1 = new StringBuilder();
-                                for (int o = 0; o < 8 - str1.length(); o++) {
-                                    add1.append("0");
-                                }
-                                str1 = add1.toString() + str1;
-                                stringBuilder.append(str1);
-                                break;
-                        }
+                while (sc.hasNextLine()) {
+                    ArrayList<String> line = new ArrayList<>(Arrays.asList(sc.nextLine().split(" ")));
+                    Row row = sheet.createRow(rownum++);
+                    for (int i = 0; i < line.size(); i++) {
+                        Cell cell = row.createCell(i);
+                        cell.setCellValue(line.get(i));
                     }
-                    String[] time = {String.valueOf(rowNum), stringBuilder.toString()};
-                    timeList.add(time);
-                    out.println(getTime(time[1]));
                 }
 
-                for (int column : COLUMNS) {
-                    cell = row.getCell(column);
+
+                ArrayList<String> hexFrames = new ArrayList<>();
+
+                System.out.println("OK!" + '\n');
+
+                System.out.println("Readnig data....");
+                // For each Row.
+                int rowNum = 0;
+                File tmp = new File("Time.tmp");
+                PrintWriter out = new PrintWriter(tmp);
+                if (saveTime) {
+                    File timefile;
+                    if (timeName) {
+                        timefile = new File(timePath1 + name + timePath2);
+                    } else {
+                        timefile = new File(timePath1);
+                    }
+                    if (timefile.mkdirs()) System.out.println("Directory created!");
+                    if (timeName) {
+                        timefile = new File(timePath1 + name + timePath2 + "time.txt");
+                    } else {
+                        timefile = new File(timePath1 + "time.txt");
+                    }
+                    out = new PrintWriter(timefile);
+                }
+                for (Row row : sheet) {
+                    Cell cell = row.getCell(5);
+                    char fb = '0';
 
                     switch (cell.getCellType()) {
                         case NUMERIC:
-                            hexFrames.add(String.valueOf((int) cell.getNumericCellValue()));
+                            fb = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).length() - 1);
                             break;
                         case STRING:
-                            hexFrames.add(cell.getStringCellValue());
+                            fb = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).length() - 1);
                             break;
                     }
-                }
-                StringBuilder frame = new StringBuilder();
-                for (String hexFrame : hexFrames) {
-                    int val = Integer.parseInt(hexFrame, 16);
-                    String bin = Integer.toBinaryString(val);
-                    StringBuilder add = new StringBuilder();
 
-                    for (int o = 0; o < 8 - bin.length(); o++) {
-                        add.append("0");
-                    }
-                    bin = add.toString() + bin;
+                    cell = row.getCell(6);
 
-                    frame.append(bin);
-                }
-                frames.add(frame.toString());
-                hexFrames.clear();
-                rowNum++;
-            }
+                    String value;
 
-            out.close();
-            if (tmp.delete()) {
-                System.out.println("Tmp files deleted!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("OK, found " + frmCnt.size() + " lines." + '\n');
+                    switch (cell.getCellType()) {
+                        case NUMERIC:
+                            value = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16));
 
-        System.out.println("Checking for missing data!");
-        for (int i = 0; i < frmCnt.size(); i++) {
-            if (frmCnt.get(i) == 0 || frmCnt.get(i) == 64 || frmCnt.get(i) == 128 || frmCnt.get(i) == 192 || frmCnt.get(i) == 256) {
-                if (frmCnt.get(i) % 64 == mirrorPos.get(i)) {
-                    starts.add(i);
-                }
-            }
-        }
-
-        for (String frame : frames) {
-            framePixels.add(frame.substring(26, 286));
-        }
-
-        for (int i = 1; i < starts.size(); i++) {
-            int missingLines = 0;
-            if (frmCnt.get(starts.get(i)) - 64 != frmCnt.get(starts.get(i - 1)) && frmCnt.get(starts.get(i)) != 0) {
-                System.out.println("Found missing data at: " + i + " (" + frmCnt.get(starts.get(i - 1)) + "; " + frmCnt.get(starts.get(i)) + "; " + majorFrmCnt.get(starts.get(i - 1)) + "; " + majorFrmCnt.get(starts.get(i)) + ")");
-                if (majorFrmCnt.get(starts.get(i - 1)).equals(majorFrmCnt.get(starts.get(i)))) {
-                    missingLines = (frmCnt.get(starts.get(i)) - frmCnt.get(starts.get(i - 1))) / 64 - 1;
-                } else if (starts.get(i - 1) < frmCnt.get(starts.get(i))) {
-                    missingLines = (320 - starts.get(i - 1)) / 64 + starts.get(i) / 64 - 1;
-                }
-            }
-            int[] data = {i, missingLines};
-            missingLinesList.add(data);
-            totalMissingLines += missingLines;
-
-        }
-        System.out.println();
-
-
-        BufferedImage compoImg = new BufferedImage(56 * 10, starts.size() * 2, BufferedImage.TYPE_INT_RGB);
-
-        Graphics g = compoImg.getGraphics();
-
-        /*
-        File folder;
-        if (normName) {
-            folder = new File(out1 + name + out2);
-            if (folder.mkdir()) {
-                System.out.println(out1 + name + out2 + " Directory created!");
-            }
-        } else {
-            folder = new File(out1);
-            if (folder.mkdir()) {
-                System.out.println(out1 + " Directory created!");
-            }
-        }
-
-        if (doHis) {
-            if (hisName) {
-                folder = new File(hisPath1 + name + hisPath2);
-                if (folder.mkdir()) {
-                    System.out.println(hisPath1 + name + hisPath2 + " Directory created!");
-                }
-            } else {
-                folder = new File(hisPath1);
-                if (folder.mkdir()) {
-                    System.out.println(hisPath1 + " Directory created!");
-                }
-            }
-        }
-        if (saveXlsx) {
-            if (xlsxName) {
-                folder = new File(xlsxP1 + name + xlsxP2);
-                if (folder.mkdir()) {
-                    System.out.println(xlsxP1 + name + xlsxP2 + " Directory created!");
-                }
-            } else {
-                folder = new File(xlsxP1);
-                if (folder.mkdir()) {
-                    System.out.println(xlsxP1 + " Directory created!");
-                }
-            }
-        }
-        if (saveCompo) {
-            if (compoName) {
-                folder = new File(compo1 + name + compo2);
-                if (folder.mkdir()) {
-                    System.out.println(compo1 + name + compo2 + " Directory created!");
-                }
-            } else {
-                folder = new File(compo1);
-                if (folder.mkdir()) {
-                    System.out.println(compo1 + " Directory created!");
-                }
-            }
-        }
-
-
-        if (saveMsa) {
-            if (msaName) {
-                folder = new File(msaPath1 + name + msaPath2);
-                if (folder.mkdir()) {
-                    System.out.println(msaPath1 + name + msaPath2 + " Directory created!");
-                }
-            } else {
-                folder = new File(msaPath1 + msaPath2);
-                if (folder.mkdir()) {
-                    System.out.println(msaPath1 + " Directory created!");
-                }
-            }
-        }
-        */
-
-        BufferedImage cloud = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
-        BufferedImage land = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
-
-        for (int i = 0; i < 20; i++) {
-            BufferedImage image = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
-            int skipped = 0;
-
-            for (int line = 0; line < starts.size(); line++) {
-
-                for (int[] data : missingLinesList) {
-                    if (data[0] == line) {
-                        for (int w = 0; w < data[1]; w++) {
-                            skipped++;
-                        }
-                    }
-                }
-
-                for (int o = 0; o < 56; o++) {
-                    Color color;
-                    int x;
-                    try {
-                        x = mirrorPos.get(starts.get(line) + o - 1);
-
-                        if (x < 56 && x != starts.get(line + 1)) {
-
-                            boolean negative = false;
-                            if (framePixels.get(starts.get(line) + o).charAt(13 * i) == '0') negative = true;
-                            int val = Integer.parseInt(framePixels.get(starts.get(line) + o).substring(13 * i + 1, 13 * i + 13), 2);
-                            if (negative) {
-                                val = 4095 - val;
-                            } else {
-                                val += 4095;
+                            StringBuilder addBuilder = new StringBuilder();
+                            for (int o = 0; o < 8 - value.length(); o++) {
+                                addBuilder.append("0");
                             }
+                            String add = addBuilder.toString();
+                            value = add + value;
+                            value = fb + value;
+                            frmCnt.add(Integer.parseInt(value, 2));
+                            break;
+                        case STRING:
+                            value = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
+                            add = "";
+                            StringBuilder addBuilder1 = new StringBuilder(add);
+                            for (int o = 0; o < 8 - value.length(); o++) {
+                                addBuilder1.append("0");
+                            }
+                            add = addBuilder1.toString();
+                            value = add + value;
+                            value = fb + value;
+                            frmCnt.add(Integer.parseInt(value, 2));
+                            break;
+                    }
+                    //System.out.println(frmCnt.get(frmCnt.size()-1));
 
-                            int col = (255 * val) / 8190;
 
-                            color = new Color(col, col, col);
+                    cell = row.getCell(17);
 
-                            //if (negative){
-                            //    color = new Color(col, 0, 0);
-                            //}
+                    switch (cell.getCellType()) {
+                        case NUMERIC:
+                            mirrorPos.add(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16));
+                            break;
+                        case STRING:
+                            mirrorPos.add(Integer.parseInt(cell.getStringCellValue(), 16));
+                            break;
+                    }
 
-                            image.setRGB(x, line + skipped, color.getRGB());
+                    cell = row.getCell(4);
+                    String binMFC = "";
+
+                    switch (cell.getCellType()) {
+                        case NUMERIC:
+                            binMFC = Integer.toBinaryString(Integer.parseInt(String.valueOf((int) cell.getNumericCellValue()), 16));
+                            break;
+                        case STRING:
+                            binMFC = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
+                            break;
+                    }
+
+                    StringBuilder zer = new StringBuilder();
+
+                    for (int o = 0; o < 8 - binMFC.length(); o++) {
+                        zer.append("0");
+                    }
+                    binMFC = zer.toString() + binMFC;
+
+                    majorFrmCnt.add(Integer.parseInt(binMFC.substring(3, 6), 2));
+
+                    if (frmCnt.get(frmCnt.size() - 1) == 0) {
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int i = 9; i < 14; i++) {
+                            cell = row.getCell(i);
+
+                            switch (cell.getCellType()) {
+                                case NUMERIC:
+                                    String str = Integer.toBinaryString(Integer.parseInt(String.valueOf((int) cell.getNumericCellValue()), 16));
+                                    StringBuilder add = new StringBuilder();
+                                    for (int o = 0; o < 8 - str.length(); o++) {
+                                        add.append("0");
+                                    }
+                                    str = add.toString() + str;
+                                    stringBuilder.append(str);
+                                    break;
+                                case STRING:
+                                    String str1 = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
+                                    StringBuilder add1 = new StringBuilder();
+                                    for (int o = 0; o < 8 - str1.length(); o++) {
+                                        add1.append("0");
+                                    }
+                                    str1 = add1.toString() + str1;
+                                    stringBuilder.append(str1);
+                                    break;
+                            }
                         }
-                    } catch (IndexOutOfBoundsException ignored) {
+                        String[] time = {String.valueOf(rowNum), stringBuilder.toString()};
+                        timeList.add(time);
+                        out.println(getTime(time[1]));
+                    }
+
+                    for (int column : COLUMNS) {
+                        cell = row.getCell(column);
+
+                        switch (cell.getCellType()) {
+                            case NUMERIC:
+                                hexFrames.add(String.valueOf((int) cell.getNumericCellValue()));
+                                break;
+                            case STRING:
+                                hexFrames.add(cell.getStringCellValue());
+                                break;
+                        }
+                    }
+                    StringBuilder frame = new StringBuilder();
+                    for (String hexFrame : hexFrames) {
+                        int val = Integer.parseInt(hexFrame, 16);
+                        String bin = Integer.toBinaryString(val);
+                        StringBuilder add = new StringBuilder();
+
+                        for (int o = 0; o < 8 - bin.length(); o++) {
+                            add.append("0");
+                        }
+                        bin = add.toString() + bin;
+
+                        frame.append(bin);
+                    }
+                    frames.add(frame.toString());
+                    hexFrames.clear();
+                    rowNum++;
+                }
+
+                out.close();
+                if (tmp.delete()) {
+                    System.out.println("Tmp files deleted!");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("OK, found " + frmCnt.size() + " lines." + '\n');
+
+            System.out.println("Checking for missing data!");
+            for (int i = 0; i < frmCnt.size(); i++) {
+                if (frmCnt.get(i) == 0 || frmCnt.get(i) == 64 || frmCnt.get(i) == 128 || frmCnt.get(i) == 192 || frmCnt.get(i) == 256) {
+                    if (frmCnt.get(i) % 64 == mirrorPos.get(i)) {
+                        starts.add(i);
+                    }
+                }
+            }
+
+            for (String frame : frames) {
+                framePixels.add(frame.substring(26, 286));
+            }
+
+            for (int i = 1; i < starts.size(); i++) {
+                int missingLines = 0;
+                if (frmCnt.get(starts.get(i)) - 64 != frmCnt.get(starts.get(i - 1)) && frmCnt.get(starts.get(i)) != 0) {
+                    System.out.println("Found missing data at: " + i + " (" + frmCnt.get(starts.get(i - 1)) + "; " + frmCnt.get(starts.get(i)) + "; " + majorFrmCnt.get(starts.get(i - 1)) + "; " + majorFrmCnt.get(starts.get(i)) + ")");
+                    if (majorFrmCnt.get(starts.get(i - 1)).equals(majorFrmCnt.get(starts.get(i)))) {
+                        missingLines = (frmCnt.get(starts.get(i)) - frmCnt.get(starts.get(i - 1))) / 64 - 1;
+                    } else if (starts.get(i - 1) < frmCnt.get(starts.get(i))) {
+                        missingLines = (320 - starts.get(i - 1)) / 64 + starts.get(i) / 64 - 1;
+                    }
+                }
+                int[] data = {i, missingLines};
+                missingLinesList.add(data);
+                totalMissingLines += missingLines;
+
+            }
+            System.out.println();
+
+
+            BufferedImage compoImg = new BufferedImage(56 * compoSizeW, (starts.size()+ totalMissingLines) * compoSizeH, BufferedImage.TYPE_INT_RGB);
+            BufferedImage hisCompoImg = new BufferedImage(56 * hisCompoSizeW, (starts.size()+ totalMissingLines) * hisCompoSizeH, BufferedImage.TYPE_INT_RGB);
+
+            Graphics g = compoImg.getGraphics();
+            Graphics gh = hisCompoImg.getGraphics();
+
+            BufferedImage cloud = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+            BufferedImage land = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+
+            for (int i = 0; i < 20; i++) {
+                BufferedImage image = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+                int skipped = 0;
+
+                for (int line = 0; line < starts.size(); line++) {
+
+                    for (int[] data : missingLinesList) {
+                        if (data[0] == line) {
+                            for (int w = 0; w < data[1]; w++) {
+                                skipped++;
+                            }
+                        }
+                    }
+
+                    for (int o = 0; o < 56; o++) {
+                        Color color;
+                        int x;
+                        try {
+                            x = mirrorPos.get(starts.get(line) + o - 1);
+
+                            if (x < 56 && x != starts.get(line + 1)) {
+
+                                boolean negative = false;
+                                if (framePixels.get(starts.get(line) + o).charAt(13 * i) == '0') negative = true;
+                                int val = Integer.parseInt(framePixels.get(starts.get(line) + o).substring(13 * i + 1, 13 * i + 13), 2);
+                                if (negative) {
+                                    val = 4095 - val;
+                                } else {
+                                    val += 4095;
+                                }
+
+                                int col = (255 * val) / 8190;
+
+                                color = new Color(col, col, col);
+
+                                //if (negative){
+                                //    color = new Color(col, 0, 0);
+                                //}
+
+                                image.setRGB(x, line + skipped, color.getRGB());
+                            }
+                        } catch (IndexOutOfBoundsException ignored) {
+                        }
+
                     }
 
                 }
 
-            }
 
-            //TODO Equalize missing pixels
+                if (averagePixels) {
+                    BufferedImage avrImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_BGR);
+                    Raster imgRaster = image.getRaster();
+                    int[] pat = {0, 0, 0};
 
+                    for (int i1 = 0; i1 < avrImg.getWidth() * avrImg.getHeight(); i1++) {
+                        int px = i1 % 56;
+                        int line = (i1 - px) / 56;
+                        int av = getAverage(px, line, image);
 
-            BufferedImage avrImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_BGR);
-            Raster imgRaster = image.getRaster();
-            int[] pat = {0, 0, 0};
-
-            for (int i1 = 0; i1 < avrImg.getWidth() * avrImg.getHeight(); i1++) {
-                int px = i1 % 56;
-                int line = (i1 - px) / 56;
-                int av = getAverage(px, line, image);
-
-                if (Math.abs(imgRaster.getPixel(px, line, pat)[0] - av) > 30) {
-                    image.setRGB(px, line, new Color(av, av, av).getRGB());
+                        if (Math.abs(imgRaster.getPixel(px, line, pat)[0] - av) > 30) {
+                            image.setRGB(px, line, new Color(av, av, av).getRGB());
+                        }
+                    }
                 }
-            }
 
-            int num = getNum(i);
-            String wav = getWav(i);
+                int num = getNum(i);
+                String wav = getWav(i);
 
-            //TODO Histogram equalized composite
+                if (saveCompo) {
+                    int x = (num - 1) % compoSizeW;
+                    int line = (num - 1 - x) / compoSizeW;
+                    g.drawImage(image, x * 56, line*image.getHeight(), null);
+                }
 
-            if (saveCompo) {
-                if (num < 11) {
-                    g.drawImage(image, (num - 1) * 56, 0, null);
+                if (saveHisCombo){
+                    int x = (num - 1) % hisCompoSizeW;
+                    int line = (num - 1 - x) / hisCompoSizeW;
+                    gh.drawImage(equalize(image), x * 56, line*image.getHeight(), null);
+                }
+
+                if (outName) {
+                    saveImg(out1 + name + out2 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, image);
                 } else {
-                    g.drawImage(image, (num - 11) * 56, image.getHeight(), null);
+                    saveImg(out1 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, image);
                 }
-            }
 
-            //TODO change composite to 5x4
 
-            if (outName) {
-                saveImg(out1 + name + out2 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, image);
-            } else {
-                saveImg(out1 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, image);
-            }
-
-            if (doHis) {
-                if (hisName) {
-                    saveImg(hisPath1 + name + hisPath2 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, equalize(image));
-                } else {
-                    saveImg(hisPath1 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, equalize(image));
+                if (doHis) {
+                    if (hisName) {
+                        saveImg(hisPath1 + name + hisPath2 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, equalize(image));
+                    } else {
+                        saveImg(hisPath1 + "Channel " + (num) + " (" + wav + ")" + "." + saveType, saveType, equalize(image));
+                    }
                 }
+
+                if (saveMsa) {
+                    if (num == cloudsChannel) {
+                        if (!cloudHe) cloud = image;
+                        if (cloudHe) cloud = equalize(image);
+                    }
+                    if (num == landChannel) {
+                        if (!landHe) land = image;
+                        if (landHe) land = equalize(image);
+                    }
+                }
+
             }
 
             if (saveMsa) {
-                if (num == cloudsChannel) {
-                    if (!cloudHe) cloud = image;
-                    if (cloudHe) cloud = equalize(image);
-                }
-                if (num == landChannel) {
-                    if (!landHe) land = image;
-                    if (landHe) land = equalize(image);
-                }
-            }
-
-        }
-
-        if (saveMsa) {
-            if (msaName) {
-                generateMsa(cloud, land, msaPath1, msaPath2, name, landThreshold, cloudThreshold);
-            } else {
-                generateMsa(cloud, land, msaPath1, "", "", landThreshold, cloudThreshold);
-            }
-        }
-
-        if (saveCompo)
-            if (compoName) {
-                saveImg(compo1 + name + compo2 + "Compo." + saveType, saveType, compoImg);
-            } else {
-                saveImg(compo1 + "Compo." + saveType, saveType, compoImg);
-            }
-
-        try {
-            if (saveXlsx) {
-                File file;
-                if (xlsxName) {
-                    file = new File(xlsxP1 + name + xlsxP2);
+                if (msaName) {
+                    generateMsa(cloud, land, msaPath1, msaPath2, name, landThreshold, cloudThreshold);
                 } else {
-                    file = new File(xlsxP1);
+                    generateMsa(cloud, land, msaPath1, "", "", landThreshold, cloudThreshold);
                 }
-                if (file.mkdirs()) System.out.println("Directory created!");
-
-                if (xlsxName) {
-                    file = new File(xlsxP1 + name + xlsxP2 + name + ".xlsx");
-                } else {
-                    file = new File(xlsxP1 + name + ".xlsx");
-                }
-                FileOutputStream out = new FileOutputStream(file);
-                workbook.write(out);
-                out.close();
             }
 
+            if (saveCompo) {
+                if (compoName) {
+                    saveImg(compo1 + name + compo2 + "Compo." + saveType, saveType, compoImg);
+                } else {
+                    saveImg(compo1 + "Compo." + saveType, saveType, compoImg);
+                }
+            }
+            if (saveHisCombo){
+                if (hisCompoName) {
+                    saveImg(hisCompo1 + name + hisCompo2 + "HE_Compo." + saveType, saveType, hisCompoImg);
+                } else {
+                    saveImg(hisCompo1 + "HE_Compo." + saveType, saveType, hisCompoImg);
+                }
+            }
+
+            try {
+                if (saveXlsx) {
+                    File file;
+                    if (xlsxName) {
+                        file = new File(xlsxP1 + name + xlsxP2);
+                    } else {
+                        file = new File(xlsxP1);
+                    }
+                    if (file.mkdirs()) System.out.println("Directory created!");
+
+                    if (xlsxName) {
+                        file = new File(xlsxP1 + name + xlsxP2 + name + ".xlsx");
+                    } else {
+                        file = new File(xlsxP1 + name + ".xlsx");
+                    }
+                    FileOutputStream out = new FileOutputStream(file);
+                    workbook.write(out);
+                    out.close();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } catch (Exception e) {
+            System.out.println("Program encountered an unhandled Exception:");
             e.printStackTrace();
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            }
+            Runtime.getRuntime().exit(1);
         }
-
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
     }
 
     private static File getLastModified(String path) {
@@ -806,13 +759,41 @@ public class Main {
 
         timePath1 = timePath;
         if (timePath.contains("[name]")) {
-            int name = msaPath.indexOf("[name]");
+            int name = timePath.indexOf("[name]");
             timePath1 = timePath.substring(0, name);
             timePath2 = timePath.substring(name + 6);
             timeName = true;
         }
         timeFormat = ini.get("time", "time_format");
         timeLanguage = ini.get("time", "time_language");
+
+        String composize = ini.get("paths", "compo_size");
+        String[] composizes = composize.split("x");
+        compoSizeW = Integer.parseInt(composizes[0]);
+        compoSizeH = Integer.parseInt(composizes[1]);
+
+        String savehiscompo = ini.get("histogram_equalization", "save_histogram_compo");
+        if (savehiscompo.equals("yes")) saveHisCombo = true;
+
+        String hiscompopath = ini.get("histogram_equalization", "histogram_compo_path");
+        hiscompopath = hiscompopath.trim();
+        if (hiscompopath.charAt(hiscompopath.length() - 1) != '/') {
+            hiscompopath = hiscompopath + '/';
+        }
+        hisCompo1 = hiscompopath;
+        if (hiscompopath.contains("[name]")) {
+            int name = hiscompopath.indexOf("[name]");
+            hisCompo1 = hiscompopath.substring(0, name);
+            hisCompo2 = hiscompopath.substring(name + 6);
+            hisCompoName = true;
+        }
+        String hiscomposize = ini.get("histogram_equalization", "histogram_compo_size");
+        String[] hiscomposizes = hiscomposize.split("x");
+        hisCompoSizeW = Integer.parseInt(hiscomposizes[0]);
+        hisCompoSizeH = Integer.parseInt(hiscomposizes[1]);
+
+        String averagepixels = ini.get("paths", "average_pixels");
+        if (averagepixels.equals("yes")) averagePixels = true;
     }
 
     private static int getNum(int i) {
@@ -979,7 +960,7 @@ public class Main {
         int[] down;
         int[] right;
         int[] left;
-        int avVal = 0;
+        int avVal;
         Raster imgRaster = image.getRaster();
         ArrayList<int[]> pxToAv = new ArrayList<>();
 
@@ -998,7 +979,7 @@ public class Main {
             ArrayList<int[]> pxToAvR = new ArrayList<>();
             int avValR = 0;
 
-            if (line+2 < image.getHeight() - 1) {
+            if (line + 2 < image.getHeight() - 1) {
                 downr = imgRaster.getPixel(x, line + 2, new int[]{0, 0, 0});
 
                 if (!Arrays.toString(downr).equals(Arrays.toString(zero))) {
@@ -1006,15 +987,15 @@ public class Main {
                 }
 
             }
-            if (x+1 < 55) {
-                rightr = imgRaster.getPixel(x + 1, line+1, new int[]{0, 0, 0});
+            if (x + 1 < 55) {
+                rightr = imgRaster.getPixel(x + 1, line + 1, new int[]{0, 0, 0});
                 if (!Arrays.toString(rightr).equals(Arrays.toString(zero))) {
                     pxToAvR.add(rightr);
                 }
 
             }
-            if (x-1 > 0) {
-                leftr = imgRaster.getPixel(x - 1, line+1, new int[]{0, 0, 0});
+            if (x - 1 > 0) {
+                leftr = imgRaster.getPixel(x - 1, line + 1, new int[]{0, 0, 0});
                 if (!Arrays.toString(leftr).equals(Arrays.toString(zero))) {
                     pxToAvR.add(leftr);
                 }
@@ -1025,12 +1006,9 @@ public class Main {
                 sum += in[0];
             }
 
-            if (pxToAvR.size()>0) avValR = sum / pxToAvR.size();
+            if (pxToAvR.size() > 0) avValR = sum / pxToAvR.size();
 
-
-
-
-            if (!Arrays.toString(down).equals(Arrays.toString(zero))&&Math.abs(imgRaster.getPixel(x, line+1, new int[]{0, 0, 0})[0]-avValR)<30) {
+            if (!Arrays.toString(down).equals(Arrays.toString(zero)) && Math.abs(imgRaster.getPixel(x, line + 1, new int[]{0, 0, 0})[0] - avValR) < 30) {
                 pxToAv.add(down);
             }
 
@@ -1050,21 +1028,21 @@ public class Main {
             ArrayList<int[]> pxToAvR = new ArrayList<>();
             int avValR = 0;
 
-            if (line-1 > 0) {
-                upr = imgRaster.getPixel(x+1, line - 1, new int[]{0, 0, 0});
+            if (line - 1 > 0) {
+                upr = imgRaster.getPixel(x + 1, line - 1, new int[]{0, 0, 0});
                 if (!Arrays.toString(upr).equals(Arrays.toString(zero))) {
                     pxToAvR.add(upr);
                 }
             }
-            if (line+1 < image.getHeight() - 1) {
-                downr = imgRaster.getPixel(x+1, line + 1, new int[]{0, 0, 0});
+            if (line + 1 < image.getHeight() - 1) {
+                downr = imgRaster.getPixel(x + 1, line + 1, new int[]{0, 0, 0});
 
                 if (!Arrays.toString(downr).equals(Arrays.toString(zero))) {
                     pxToAvR.add(downr);
                 }
 
             }
-            if (x+2 < 55) {
+            if (x + 2 < 55) {
                 rightr = imgRaster.getPixel(x + 2, line, new int[]{0, 0, 0});
                 if (!Arrays.toString(rightr).equals(Arrays.toString(zero))) {
                     pxToAvR.add(rightr);
@@ -1076,11 +1054,10 @@ public class Main {
                 sum += in[0];
             }
 
-            if (pxToAvR.size()>0) avValR = sum / pxToAvR.size();
+            if (pxToAvR.size() > 0) avValR = sum / pxToAvR.size();
 
 
-
-            if (!Arrays.toString(right).equals(Arrays.toString(zero))&&Math.abs(imgRaster.getPixel(x+1, line, new int[]{0, 0, 0})[0]-avValR)<30) {
+            if (!Arrays.toString(right).equals(Arrays.toString(zero)) && Math.abs(imgRaster.getPixel(x + 1, line, new int[]{0, 0, 0})[0] - avValR) < 30) {
                 pxToAv.add(right);
             }
 
@@ -1092,7 +1069,7 @@ public class Main {
 
         if (pxToAv.size() > 1) {
             avVal = sum / pxToAv.size();
-        }else avVal = imgRaster.getPixel(x, line, new int[]{0, 0, 0})[0];
+        } else avVal = imgRaster.getPixel(x, line, new int[]{0, 0, 0})[0];
 
         return avVal;
     }

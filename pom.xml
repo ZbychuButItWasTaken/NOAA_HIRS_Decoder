@@ -6,7 +6,7 @@
 
     <groupId>sh.surge.NOAA_HIRS_Decoder</groupId>
     <artifactId>NOAA_HIRS_Decoder</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -145,6 +145,7 @@
                             <jar>target/NOAA_HIRS_Decoder-${project.version}-jar-with-dependencies.jar</jar>
                             <icon>src/main/resources/icon.ico</icon>
                             <errTitle>NOAA_HIRS_Decoder</errTitle>
+                            <chdir>.</chdir>
                             <classPath>
                                 <mainClass>sh.surge.NOAA_HIRS_Decoder.Main</mainClass>
                                 <addDependencies>false</addDependencies>
