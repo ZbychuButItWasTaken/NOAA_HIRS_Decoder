@@ -12,10 +12,12 @@ Features:
  - Do not jump missing minorframes but black them out in the image
  - save the time of the pass
  - Equalize bad/missing pixels with the neighboring ones
+ - custom sized composites
+ - composite of equalized images
+ - Open file as an argument for application
 
 TODO:
  - Build RGB images from 3 channels
- - composite of equalized images
  - Add support for different color palettes
  - Get the satellites name
- - set composites to be 5x4 instead of 10x2 to make them more fitting to computer screens
+ - Cut off bad start and end
