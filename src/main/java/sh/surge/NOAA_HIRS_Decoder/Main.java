@@ -441,7 +441,7 @@ public class Main {
             for (int i1 = 0; i1 < avrImg.getWidth() * avrImg.getHeight(); i1++) {
                 int px = i1 % 56;
                 int line = (i1 - px) / 56;
-                int av = getAverage(px, line, image, false);
+                int av = getAverage(px, line, image);
 
                 if (Math.abs(imgRaster.getPixel(px, line, pat)[0] - av) > 30) {
                     image.setRGB(px, line, new Color(av, av, av).getRGB());
@@ -973,7 +973,7 @@ public class Main {
         return dateFormat.format(calendar.getTime());
     }
 
-    private static int getAverage(int x, int line, BufferedImage image, boolean check) {
+    private static int getAverage(int x, int line, BufferedImage image) {
         final int[] zero = {0, 0, 0};
         int[] up;
         int[] down;
@@ -983,7 +983,7 @@ public class Main {
         Raster imgRaster = image.getRaster();
         ArrayList<int[]> pxToAv = new ArrayList<>();
 
-        if (line > 0 && !check) {
+        if (line > 0) {
             up = imgRaster.getPixel(x, line - 1, new int[]{0, 0, 0});
             if (!Arrays.toString(up).equals(Arrays.toString(zero))) {
                 pxToAv.add(up);
@@ -991,17 +991,51 @@ public class Main {
         }
         if (line < image.getHeight() - 1) {
             down = imgRaster.getPixel(x, line + 1, new int[]{0, 0, 0});
-            try {
-                if (!Arrays.toString(down).equals(Arrays.toString(zero)) /*&& Math.abs(getAverage(x, line - 1, image, true) - down[0]) > 30*/) {
-                    pxToAv.add(down);
+
+            int[] leftr;
+            int[] rightr;
+            int[] downr;
+            ArrayList<int[]> pxToAvR = new ArrayList<>();
+            int avValR = 0;
+
+            if (line+2 < image.getHeight() - 1) {
+                downr = imgRaster.getPixel(x, line + 2, new int[]{0, 0, 0});
+
+                if (!Arrays.toString(downr).equals(Arrays.toString(zero))) {
+                    pxToAvR.add(downr);
                 }
-            }catch (ArrayIndexOutOfBoundsException e){
-                if (!Arrays.toString(down).equals(Arrays.toString(zero))) {
-                    pxToAv.add(down);
-                }
+
             }
+            if (x+1 < 55) {
+                rightr = imgRaster.getPixel(x + 1, line+1, new int[]{0, 0, 0});
+                if (!Arrays.toString(rightr).equals(Arrays.toString(zero))) {
+                    pxToAvR.add(rightr);
+                }
+
+            }
+            if (x-1 > 0) {
+                leftr = imgRaster.getPixel(x - 1, line+1, new int[]{0, 0, 0});
+                if (!Arrays.toString(leftr).equals(Arrays.toString(zero))) {
+                    pxToAvR.add(leftr);
+                }
+
+            }
+            int sum = 0;
+            for (int[] in : pxToAvR) {
+                sum += in[0];
+            }
+
+            if (pxToAvR.size()>0) avValR = sum / pxToAvR.size();
+
+
+
+
+            if (!Arrays.toString(down).equals(Arrays.toString(zero))&&Math.abs(imgRaster.getPixel(x, line+1, new int[]{0, 0, 0})[0]-avValR)<30) {
+                pxToAv.add(down);
+            }
+
         }
-        if (x > 0 && !check) {
+        if (x > 0) {
             left = imgRaster.getPixel(x - 1, line, new int[]{0, 0, 0});
             if (!Arrays.toString(left).equals(Arrays.toString(zero))) {
                 pxToAv.add(left);
@@ -1009,25 +1043,57 @@ public class Main {
         }
         if (x < 55) {
             right = imgRaster.getPixel(x + 1, line, new int[]{0, 0, 0});
-            try {
-                if (!Arrays.toString(right).equals(Arrays.toString(zero)) /*&& Math.abs(getAverage(x + 1, line, image, true) - right[0]) > 30*/) {
-                    pxToAv.add(right);
-                }
-            }catch (ArrayIndexOutOfBoundsException e){
-                if (!Arrays.toString(right).equals(Arrays.toString(zero))) {
-                    pxToAv.add(right);
+
+            int[] upr;
+            int[] rightr;
+            int[] downr;
+            ArrayList<int[]> pxToAvR = new ArrayList<>();
+            int avValR = 0;
+
+            if (line-1 > 0) {
+                upr = imgRaster.getPixel(x+1, line - 1, new int[]{0, 0, 0});
+                if (!Arrays.toString(upr).equals(Arrays.toString(zero))) {
+                    pxToAvR.add(upr);
                 }
             }
+            if (line+1 < image.getHeight() - 1) {
+                downr = imgRaster.getPixel(x+1, line + 1, new int[]{0, 0, 0});
+
+                if (!Arrays.toString(downr).equals(Arrays.toString(zero))) {
+                    pxToAvR.add(downr);
+                }
+
+            }
+            if (x+2 < 55) {
+                rightr = imgRaster.getPixel(x + 2, line, new int[]{0, 0, 0});
+                if (!Arrays.toString(rightr).equals(Arrays.toString(zero))) {
+                    pxToAvR.add(rightr);
+                }
+
+            }
+            int sum = 0;
+            for (int[] in : pxToAvR) {
+                sum += in[0];
+            }
+
+            if (pxToAvR.size()>0) avValR = sum / pxToAvR.size();
+
+
+
+            if (!Arrays.toString(right).equals(Arrays.toString(zero))&&Math.abs(imgRaster.getPixel(x+1, line, new int[]{0, 0, 0})[0]-avValR)<30) {
+                pxToAv.add(right);
+            }
+
         }
         int sum = 0;
         for (int[] in : pxToAv) {
             sum += in[0];
         }
-        try {
+
+        if (pxToAv.size() > 1) {
             avVal = sum / pxToAv.size();
-        } catch (ArithmeticException e) {
-            e.printStackTrace();
-        }
+        }else avVal = imgRaster.getPixel(x, line, new int[]{0, 0, 0})[0];
+
         return avVal;
     }
 }
