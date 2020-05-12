@@ -8,7 +8,7 @@ Features:
  - option to use a common folder
  - Do not jump missing minorframes but black them out in the image
  - save the time of the pass
- - Equalize bad/missing pixels with the neighboring ones (WIP)
+ - Equalize bad/missing pixels with the neighboring ones
 
 TODO:
  - Build RGB images from 3 channels
