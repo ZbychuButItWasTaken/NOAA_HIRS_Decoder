@@ -53,11 +53,14 @@ public class Main {
     private static final XSSFWorkbook workbook = new XSSFWorkbook();
     private static final ArrayList<Integer> majorFrmCnt = new ArrayList<>();
     private static final ArrayList<int[]> missingLinesList = new ArrayList<>();
-    //todo check for missing majorframes
-    private static final ArrayList<String[]> timeList = new ArrayList<>();
+    //todo check for missing 7 majorframes
+    //private static final ArrayList<String[]> timeList = new ArrayList<>();
 
     private static String input, saveType;
     private static boolean saveCompo, doHis, saveXlsx, saveMsa, saveTime, cloudHe, landHe, outName, compoName, hisName, xlsxName, msaName, timeName, saveHisCombo, hisCompoName, averagePixels;
+    private static boolean saveRgb, rgbRedHe, rgbBlueHe, rgbGreenHe, rgbName;
+    private static String rgbPath1, rgbPath2;
+    private static int rgbChR, rgbChG, rgbChB;
     private static String compo1, compo2, hisCompo1, hisCompo2;
     private static String out1, out2;
     private static String hisPath1, hisPath2;
@@ -241,7 +244,7 @@ public class Main {
                             }
                         }
                         String[] time = {String.valueOf(rowNum), stringBuilder.toString()};
-                        timeList.add(time);
+                        //timeList.add(time);
                         out.println(getTime(time[1]));
                     }
 
@@ -315,17 +318,21 @@ public class Main {
             System.out.println();
 
 
-            BufferedImage compoImg = new BufferedImage(56 * compoSizeW, (starts.size()+ totalMissingLines) * compoSizeH, BufferedImage.TYPE_INT_RGB);
-            BufferedImage hisCompoImg = new BufferedImage(56 * hisCompoSizeW, (starts.size()+ totalMissingLines) * hisCompoSizeH, BufferedImage.TYPE_INT_RGB);
+            BufferedImage compoImg = new BufferedImage(56 * compoSizeW, (starts.size() + totalMissingLines) * compoSizeH, BufferedImage.TYPE_INT_RGB);
+            BufferedImage hisCompoImg = new BufferedImage(56 * hisCompoSizeW, (starts.size() + totalMissingLines) * hisCompoSizeH, BufferedImage.TYPE_INT_RGB);
 
             Graphics g = compoImg.getGraphics();
             Graphics gh = hisCompoImg.getGraphics();
 
             BufferedImage cloud = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
             BufferedImage land = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+            BufferedImage rgbImage = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+            WritableRaster rast = null;
 
             for (int i = 0; i < 20; i++) {
                 BufferedImage image = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+
+                rast = rgbImage.getData().createCompatibleWritableRaster();
                 int skipped = 0;
 
                 for (int line = 0; line < starts.size(); line++) {
@@ -364,10 +371,11 @@ public class Main {
                                 //}
 
                                 image.setRGB(x, line + skipped, color.getRGB());
+
                             }
                         } catch (IndexOutOfBoundsException ignored) {
-                        }
 
+                        }
                     }
 
                 }
@@ -392,16 +400,17 @@ public class Main {
                 int num = getNum(i);
                 String wav = getWav(i);
 
+
                 if (saveCompo) {
                     int x = (num - 1) % compoSizeW;
                     int line = (num - 1 - x) / compoSizeW;
-                    g.drawImage(image, x * 56, line*image.getHeight(), null);
+                    g.drawImage(image, x * 56, line * image.getHeight(), null);
                 }
 
-                if (saveHisCombo){
+                if (saveHisCombo) {
                     int x = (num - 1) % hisCompoSizeW;
                     int line = (num - 1 - x) / hisCompoSizeW;
-                    gh.drawImage(equalize(image), x * 56, line*image.getHeight(), null);
+                    gh.drawImage(equalize(image), x * 56, line * image.getHeight(), null);
                 }
 
                 if (outName) {
@@ -430,6 +439,73 @@ public class Main {
                     }
                 }
 
+                if (saveRgb) {
+                    for (int i1 = 0; i1 < image.getWidth() * image.getHeight(); i1++) {
+                        int x = i1 % 56;
+                        int line = (i1-x)/56;
+                        if (getNum(i) == rgbChR) {
+                            /*
+                            Raster inRast;
+                            if (rgbRedHe){
+                                inRast = equalize(image).getData();
+                            }else {
+                                inRast = image.getData();
+                            }
+                            int[] val = rast.getPixel(x, line, new int[] {0,0,0});
+                            val[0] = inRast.getPixel(x,line, new int[]{0,0,0})[0];
+                            rgbImage.setRGB(x, line, new Color(val[0], val[1], val[2]).getRGB());
+
+                             */
+
+                            Color exCol = new Color(rgbImage.getRGB(x, line));
+                            rgbImage.setRGB(x, line, new Color(new Color(image.getRGB(x, line)).getRed(), exCol.getGreen(), exCol.getBlue()).getRGB());
+                            if (rgbRedHe) rgbImage.setRGB(x, line, new Color(new Color(equalize(image).getRGB(x, line)).getRed(), exCol.getGreen(), exCol.getBlue()).getRGB());
+                        }
+                        if (getNum(i) == rgbChG) {
+                            /*
+                            Raster inRast;
+                            if (rgbGreenHe){
+                                inRast = equalize(image).getData();
+                            }else {
+                                inRast = image.getData();
+                            }
+                            int[] val = rast.getPixel(x, line, new int[] {0,0,0});
+                            val[1] = inRast.getPixel(x,line, new int[]{0,0,0})[0];
+                            rgbImage.setRGB(x, line, new Color(val[0], val[1], val[2]).getRGB());
+
+                             */
+                            Color exCol = new Color(rgbImage.getRGB(x, line));
+                            rgbImage.setRGB(x, line, new Color(exCol.getRed(), new Color(image.getRGB(x, line)).getGreen(), exCol.getBlue()).getRGB());
+                            if (rgbGreenHe) rgbImage.setRGB(x, line, new Color(exCol.getRed(), new Color(equalize(image).getRGB(x, line)).getGreen(), exCol.getBlue()).getRGB());
+                        }
+                        if (getNum(i) == rgbChB) {
+                            /*
+                            Raster inRast;
+                            if (rgbBlueHe){
+                                inRast = equalize(image).getData();
+                            }else {
+                                inRast = image.getData();
+                            }
+                            int[] val = rast.getPixel(x, line, new int[] {0,0,0});
+                            val[2] = inRast.getPixel(x,line, new int[]{0,0,0})[0];
+                            rgbImage.setRGB(x, line, new Color(val[0], val[1], val[2]).getRGB());
+
+                             */
+                            Color exCol = new Color(rgbImage.getRGB(x, line));
+                            rgbImage.setRGB(x, line, new Color(exCol.getRed(), exCol.getGreen(), new Color(image.getRGB(x, line)).getBlue()).getRGB());
+                            if (rgbBlueHe) rgbImage.setRGB(x, line, new Color(exCol.getRed(), exCol.getGreen(), new Color(equalize(image).getRGB(x, line)).getBlue()).getRGB());
+                        }
+                    }
+                }
+
+            }
+
+            if (saveRgb) {
+                if (rgbName) {
+                    saveImg(rgbPath1 + name + rgbPath2 + "Rgb." + saveType, saveType, rgbImage);
+                } else {
+                    saveImg(rgbPath1 + "Rgb." + saveType, saveType, rgbImage);
+                }
             }
 
             if (saveMsa) {
@@ -447,7 +523,7 @@ public class Main {
                     saveImg(compo1 + "Compo." + saveType, saveType, compoImg);
                 }
             }
-            if (saveHisCombo){
+            if (saveHisCombo) {
                 if (hisCompoName) {
                     saveImg(hisCompo1 + name + hisCompo2 + "HE_Compo." + saveType, saveType, hisCompoImg);
                 } else {
@@ -794,6 +870,25 @@ public class Main {
 
         String averagepixels = ini.get("paths", "average_pixels");
         if (averagepixels.equals("yes")) averagePixels = true;
+
+        String savergb = ini.get("rgb", "save_rgb");
+        saveRgb = savergb.equals("yes");
+
+        String rgbpath = ini.get("rgb", "rgb_path");
+        rgbPath1 = rgbpath;
+        if (rgbpath.contains("[name]")) {
+            int name = rgbpath.indexOf("[name]");
+            rgbPath1 = rgbpath.substring(0, name);
+            rgbPath2 = rgbpath.substring(name + 6);
+            rgbName = true;
+        }
+        rgbChR = Integer.parseInt(ini.get("rgb", "rgb_red"));
+        rgbChG = Integer.parseInt(ini.get("rgb", "rgb_green"));
+        rgbChB = Integer.parseInt(ini.get("rgb", "rgb_blue"));
+        rgbRedHe = ini.get("rgb", "rgb_red_he").equals("yes");
+        rgbGreenHe = ini.get("rgb", "rgb_green_he").equals("yes");
+        rgbBlueHe = ini.get("rgb", "rgb_blue_he").equals("yes");
+
     }
 
     private static int getNum(int i) {
