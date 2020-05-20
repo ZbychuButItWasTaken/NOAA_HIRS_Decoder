@@ -6,7 +6,7 @@
 
     <groupId>sh.surge.NOAA_HIRS_Decoder</groupId>
     <artifactId>NOAA_HIRS_Decoder</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
     <packaging>jar</packaging>
 
     <dependencies>
