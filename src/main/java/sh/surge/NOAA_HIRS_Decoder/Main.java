@@ -992,13 +992,13 @@ public class Main {
                 wav = "13.49μm - 13.21μm";
                 break;
             case 10:
-                wav = "12.59μm - 12.34μm";
+                wav = "11.39μm - 10.81μm";
                 break;
             case 11:
                 wav = "0.71μm - 0.66μm";
                 break;
             case 12:
-                wav = "9.82μm - 9.59μm";
+                wav = "12.81μm - 12.30μm";
                 break;
             case 13:
                 wav = "4.54μm - 4.50μm";
@@ -1019,7 +1019,7 @@ public class Main {
                 wav = "4.47μm - 4.42μm";
                 break;
             case 19:
-                wav = "11.33μm - 10.89μm";
+                wav = "9.81μm - 9.60μm";
                 break;
         }
         return wav;
