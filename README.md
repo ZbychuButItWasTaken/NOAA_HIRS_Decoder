@@ -1,4 +1,4 @@
-# NOAA_HIRS_Decoder
+# NOAA HIRS Decoder
 Decoder for decoding HIRS data From NOAA satellites
 
 Check out the project website: https://noaa_hirs_decoder.surge.sh
@@ -15,9 +15,9 @@ Features:
  - custom sized composites
  - composite of equalized images
  - Open file as an argument for application
+ - Build RGB images from 3 channels
 
 TODO:
- - Build RGB images from 3 channels
  - Add support for different color palettes
  - Get the satellites name
  - Cut off bad start and end
