@@ -1,9 +1,10 @@
 # NOAA_HIRS_Decoder
-Decoder for decoding HIRS data From NOAA satellites
+### Decoder for decoding HIRS data From NOAA satellites
 
+## Website
 Check out the project website for a tutorial: https://noaa_hirs_decoder.surge.sh
 
-Features:
+# Features
  - decode HIRS data to pictures
  - histogram equalization
  - multispectral analysis with brightness values
@@ -20,6 +21,6 @@ Features:
   - Get the satellites name
   - Cut off bad start and end
 
-TODO:
+# TODO
  - GUI
 
