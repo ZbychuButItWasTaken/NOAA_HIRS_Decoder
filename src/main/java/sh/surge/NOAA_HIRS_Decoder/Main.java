@@ -55,10 +55,10 @@ public class Main {
     private static final ArrayList<int[]> missingLinesList = new ArrayList<>();
     //todo check for missing 7 majorframes
     //private static final ArrayList<String[]> timeList = new ArrayList<>();
-
+    private static final ArrayList<Integer> ids = new ArrayList<>();
     private static String input, saveType;
     private static boolean saveCompo, doHis, saveXlsx, saveMsa, saveTime, cloudHe, landHe, outName, compoName, hisName, xlsxName, msaName, timeName, saveHisCombo, hisCompoName, averagePixels;
-    private static boolean saveRgb, rgbRedHe, rgbBlueHe, rgbGreenHe, rgbName;
+    private static boolean saveRgb, rgbRedHe, rgbBlueHe, rgbGreenHe, rgbName, saveName, fullBW, doCrop;
     private static String rgbPath1, rgbPath2;
     private static int rgbChR, rgbChG, rgbChB;
     private static String compo1, compo2, hisCompo1, hisCompo2;
@@ -71,6 +71,9 @@ public class Main {
     private static Color waterBase, landBase, cloudBase;
     private static float landBri, waterBri, cloudBri;
     private static int compoSizeW, compoSizeH, hisCompoSizeW, hisCompoSizeH;
+    private static int badLineThreshold;
+    private static int averagingThreshold;
+    private static int firstGoodLine, croppedImgH;
 
 
     public static void main(String[] args) {
@@ -87,6 +90,8 @@ public class Main {
                     System.out.println("File loaded from argument path.");
                 } else {
                     inputFile = getLastModified(input);
+                }
+                if (inputFile != null) {
                     System.out.println("Loaded newest file.");
                 }
 
@@ -133,12 +138,13 @@ public class Main {
                     }
                     if (timefile.mkdirs()) System.out.println("Directory created!");
                     if (timeName) {
-                        timefile = new File(timePath1 + name + timePath2 + "time.txt");
+                        timefile = new File(timePath1 + name + timePath2 + "stat.txt");
                     } else {
-                        timefile = new File(timePath1 + "time.txt");
+                        timefile = new File(timePath1 + "stat.txt");
                     }
                     out = new PrintWriter(timefile);
                 }
+
                 for (Row row : sheet) {
                     Cell cell = row.getCell(5);
                     char fb = '0';
@@ -208,12 +214,37 @@ public class Main {
                             break;
                     }
 
+
                     StringBuilder zer = new StringBuilder();
 
                     for (int o = 0; o < 8 - binMFC.length(); o++) {
                         zer.append("0");
                     }
                     binMFC = zer.toString() + binMFC;
+
+                    cell = row.getCell(3);
+                    String nam = "";
+
+                    switch (cell.getCellType()) {
+                        case NUMERIC:
+                            nam = Integer.toBinaryString(Integer.parseInt(String.valueOf((int) cell.getNumericCellValue()), 16));
+                            break;
+                        case STRING:
+                            nam = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16));
+                            break;
+                    }
+
+
+                    StringBuilder namb = new StringBuilder();
+
+                    for (int o = 0; o < 8 - nam.length(); o++) {
+                        namb.append("0");
+                    }
+                    nam = namb.toString() + nam;
+
+                    nam = nam.substring(4);
+                    int id = Integer.parseInt(nam, 2);
+                    ids.add(id);
 
                     majorFrmCnt.add(Integer.parseInt(binMFC.substring(3, 6), 2));
 
@@ -278,6 +309,10 @@ public class Main {
                     rowNum++;
                 }
 
+                String spacecraftName = getSpacecraftName();
+                System.out.println(spacecraftName);
+                if (saveName) out.println('\n' + spacecraftName);
+
                 out.close();
                 if (tmp.delete()) {
                     System.out.println("Tmp files deleted!");
@@ -327,12 +362,11 @@ public class Main {
             BufferedImage cloud = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
             BufferedImage land = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
             BufferedImage rgbImage = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
-            WritableRaster rast = null;
 
             for (int i = 0; i < 20; i++) {
                 BufferedImage image = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
 
-                rast = rgbImage.getData().createCompatibleWritableRaster();
+                rgbImage.getData().createCompatibleWritableRaster();
                 int skipped = 0;
 
                 for (int line = 0; line < starts.size(); line++) {
@@ -356,13 +390,19 @@ public class Main {
                                 boolean negative = false;
                                 if (framePixels.get(starts.get(line) + o).charAt(13 * i) == '0') negative = true;
                                 int val = Integer.parseInt(framePixels.get(starts.get(line) + o).substring(13 * i + 1, 13 * i + 13), 2);
-                                if (negative) {
-                                    val = 4095 - val;
+                                int col;
+                                if (fullBW) {
+                                    if (negative) {
+                                        val = 4095 - val;
+                                    } else {
+                                        val += 4095;
+                                    }
+
+                                    col = (255 * val) / 8190;
                                 } else {
-                                    val += 4095;
+                                    col = (255 * val) / 4095;
                                 }
 
-                                int col = (255 * val) / 8190;
 
                                 color = new Color(col, col, col);
 
@@ -380,6 +420,22 @@ public class Main {
 
                 }
 
+                if (doCrop) {
+                    if (i == 0) {
+                        image = crop(image, true, 0, 0);
+                        compoImg = new BufferedImage(56 * compoSizeW, image.getHeight() * compoSizeH, BufferedImage.TYPE_INT_RGB);
+                        hisCompoImg = new BufferedImage(56 * hisCompoSizeW, image.getHeight() * hisCompoSizeH, BufferedImage.TYPE_INT_RGB);
+
+                        g = compoImg.getGraphics();
+                        gh = hisCompoImg.getGraphics();
+                        cloud = new BufferedImage(56, starts.size() + totalMissingLines, BufferedImage.TYPE_INT_RGB);
+                        land = new BufferedImage(56, image.getHeight(), BufferedImage.TYPE_INT_RGB);
+                        rgbImage = new BufferedImage(56, image.getHeight(), BufferedImage.TYPE_INT_RGB);
+                    }else{
+                        image = crop(image, false, firstGoodLine, croppedImgH);
+                    }
+                }
+
 
                 if (averagePixels) {
                     BufferedImage avrImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_BGR);
@@ -391,7 +447,7 @@ public class Main {
                         int line = (i1 - px) / 56;
                         int av = getAverage(px, line, image);
 
-                        if (Math.abs(imgRaster.getPixel(px, line, pat)[0] - av) > 30) {
+                        if (Math.abs(imgRaster.getPixel(px, line, pat)[0] - av) > averagingThreshold) {
                             image.setRGB(px, line, new Color(av, av, av).getRGB());
                         }
                     }
@@ -442,7 +498,7 @@ public class Main {
                 if (saveRgb) {
                     for (int i1 = 0; i1 < image.getWidth() * image.getHeight(); i1++) {
                         int x = i1 % 56;
-                        int line = (i1-x)/56;
+                        int line = (i1 - x) / 56;
                         if (getNum(i) == rgbChR) {
                             /*
                             Raster inRast;
@@ -459,7 +515,8 @@ public class Main {
 
                             Color exCol = new Color(rgbImage.getRGB(x, line));
                             rgbImage.setRGB(x, line, new Color(new Color(image.getRGB(x, line)).getRed(), exCol.getGreen(), exCol.getBlue()).getRGB());
-                            if (rgbRedHe) rgbImage.setRGB(x, line, new Color(new Color(equalize(image).getRGB(x, line)).getRed(), exCol.getGreen(), exCol.getBlue()).getRGB());
+                            if (rgbRedHe)
+                                rgbImage.setRGB(x, line, new Color(new Color(equalize(image).getRGB(x, line)).getRed(), exCol.getGreen(), exCol.getBlue()).getRGB());
                         }
                         if (getNum(i) == rgbChG) {
                             /*
@@ -476,7 +533,8 @@ public class Main {
                              */
                             Color exCol = new Color(rgbImage.getRGB(x, line));
                             rgbImage.setRGB(x, line, new Color(exCol.getRed(), new Color(image.getRGB(x, line)).getGreen(), exCol.getBlue()).getRGB());
-                            if (rgbGreenHe) rgbImage.setRGB(x, line, new Color(exCol.getRed(), new Color(equalize(image).getRGB(x, line)).getGreen(), exCol.getBlue()).getRGB());
+                            if (rgbGreenHe)
+                                rgbImage.setRGB(x, line, new Color(exCol.getRed(), new Color(equalize(image).getRGB(x, line)).getGreen(), exCol.getBlue()).getRGB());
                         }
                         if (getNum(i) == rgbChB) {
                             /*
@@ -493,7 +551,8 @@ public class Main {
                              */
                             Color exCol = new Color(rgbImage.getRGB(x, line));
                             rgbImage.setRGB(x, line, new Color(exCol.getRed(), exCol.getGreen(), new Color(image.getRGB(x, line)).getBlue()).getRGB());
-                            if (rgbBlueHe) rgbImage.setRGB(x, line, new Color(exCol.getRed(), exCol.getGreen(), new Color(equalize(image).getRGB(x, line)).getBlue()).getRGB());
+                            if (rgbBlueHe)
+                                rgbImage.setRGB(x, line, new Color(exCol.getRed(), exCol.getGreen(), new Color(equalize(image).getRGB(x, line)).getBlue()).getRGB());
                         }
                     }
                 }
@@ -564,6 +623,50 @@ public class Main {
             }
             Runtime.getRuntime().exit(1);
         }
+    }
+
+    private static BufferedImage crop(BufferedImage inImage, boolean first, int CfirstGood, int Cheight) {
+        int firstGood = 0;
+        int firstGoodBottom = 0;
+        int height;
+        if (first) {
+            for (int line = 0; line < inImage.getHeight() - 1; line++) {
+                int goodPxs = 0;
+                for (int x = 0; x < 56; x++) {
+                    int av = getAverage(x, line, inImage);
+                    if (Math.abs(av - new Color(inImage.getRGB(x, line)).getRed()) < averagingThreshold && av != 0) {
+                        goodPxs++;
+                    }
+                }
+                if (goodPxs > 56 * badLineThreshold / 100) {
+                    firstGood = line;
+                    break;
+                }
+            }
+
+            for (int line = inImage.getHeight() - 1; line > 0; line--) {
+                int goodPxs = 0;
+                for (int x = 0; x < 56; x++) {
+                    int av = getAverage(x, line, inImage);
+                    if (Math.abs(av - new Color(inImage.getRGB(x, line)).getRed()) < averagingThreshold) {
+                        goodPxs++;
+                    }
+                }
+                if (goodPxs > 56 * badLineThreshold / 100) {
+                    firstGoodBottom = line;
+                    break;
+                }
+            }
+            height = firstGoodBottom - firstGood;
+            croppedImgH = height;
+            firstGoodLine = firstGood;
+        } else {
+            height = Cheight;
+            firstGood = CfirstGood;
+        }
+        System.out.println(height);
+
+        return inImage.getSubimage(0, firstGood, 56, height);
     }
 
     private static File getLastModified(String path) {
@@ -646,7 +749,7 @@ public class Main {
     }
 
     private static void generateMsa(BufferedImage cloud, BufferedImage land, String msaPath1, String msaPath2, String name, int landThreshold, int cloudThreshold) {
-        BufferedImage msaImg = new BufferedImage(cloud.getWidth(), land.getHeight(), BufferedImage.TYPE_INT_RGB);
+        BufferedImage msaImg = new BufferedImage(cloud.getWidth(), cloud.getHeight(), BufferedImage.TYPE_INT_RGB);
         for (int line = 0; line < msaImg.getHeight(); line++) {
             for (int x = 0; x < 56; x++) {
                 Raster rasterLand = land.getRaster();
@@ -701,23 +804,23 @@ public class Main {
         }
 
 
-        input = ini.get("paths", "input");
+        input = ini.get("main", "input");
         input = input.trim();
         if (input.charAt(input.length() - 1) != '/') {
             input = input + '/';
         }
 
-        String output = ini.get("paths", "output");
+        String output = ini.get("main", "output");
         output = output.trim();
         if (output.charAt(output.length() - 1) != '/') {
             output = output + '/';
         }
 
 
-        String com = ini.get("paths", "save_compo");
+        String com = ini.get("main", "save_compo");
         saveCompo = com.equals("yes");
 
-        String compo = ini.get("paths", "compo_path");
+        String compo = ini.get("main", "compo_path");
         compo = compo.trim();
         if (compo.charAt(compo.length() - 1) != '/') {
             compo = compo + '/';
@@ -731,8 +834,11 @@ public class Main {
             compoName = true;
         }
 
-        saveType = ini.get("paths", "save_type");
-        saveQuality = Integer.parseInt(ini.get("paths", "save_quality"));
+        if (ini.get("main", "B/W_range").equals("full")) fullBW = true;
+        if (ini.get("main", "crop").equals("yes")) doCrop = true;
+
+        saveType = ini.get("main", "save_type");
+        saveQuality = Integer.parseInt(ini.get("main", "save_quality"));
 
         String sXlsx = ini.get("xlsx", "save_xlsx");
 
@@ -823,10 +929,14 @@ public class Main {
         waterBri = ini.get("msa", "water_brightening", float.class);
         cloudBri = ini.get("msa", "cloud_brightening", float.class);
 
-        String timeS = ini.get("time", "save_time");
+        String timeS = ini.get("stat", "save_time");
 
         if (timeS.equals("yes")) saveTime = true;
-        String timePath = ini.get("time", "time_path");
+
+        String nameS = ini.get("stat", "save_name");
+
+        if (nameS.equals("yes")) saveName = true;
+        String timePath = ini.get("stat", "stat_path");
 
         timePath = timePath.trim();
         if (timePath.charAt(timePath.length() - 1) != '/') {
@@ -840,10 +950,10 @@ public class Main {
             timePath2 = timePath.substring(name + 6);
             timeName = true;
         }
-        timeFormat = ini.get("time", "time_format");
-        timeLanguage = ini.get("time", "time_language");
+        timeFormat = ini.get("stat", "time_format");
+        timeLanguage = ini.get("stat", "time_language");
 
-        String composize = ini.get("paths", "compo_size");
+        String composize = ini.get("main", "compo_size");
         String[] composizes = composize.split("x");
         compoSizeW = Integer.parseInt(composizes[0]);
         compoSizeH = Integer.parseInt(composizes[1]);
@@ -868,7 +978,7 @@ public class Main {
         hisCompoSizeW = Integer.parseInt(hiscomposizes[0]);
         hisCompoSizeH = Integer.parseInt(hiscomposizes[1]);
 
-        String averagepixels = ini.get("paths", "average_pixels");
+        String averagepixels = ini.get("main", "average_pixels");
         if (averagepixels.equals("yes")) averagePixels = true;
 
         String savergb = ini.get("rgb", "save_rgb");
@@ -888,6 +998,9 @@ public class Main {
         rgbRedHe = ini.get("rgb", "rgb_red_he").equals("yes");
         rgbGreenHe = ini.get("rgb", "rgb_green_he").equals("yes");
         rgbBlueHe = ini.get("rgb", "rgb_blue_he").equals("yes");
+
+        badLineThreshold = Integer.parseInt(ini.get("main", "crop_threshold"));
+        averagingThreshold = Integer.parseInt(ini.get("main", "averaging_threshold"));
 
     }
 
@@ -1167,5 +1280,53 @@ public class Main {
         } else avVal = imgRaster.getPixel(x, line, new int[]{0, 0, 0})[0];
 
         return avVal;
+    }
+
+    private static String getSpacecraftName() {
+        String name = "";
+        ArrayList<Integer> idCount = new ArrayList<>();
+        ArrayList<Integer> idNames = new ArrayList<>();
+        for (int id : ids) {
+            if (idCount.size() > 0) {
+                boolean ins = false;
+                for (int idc = 0; idc < idCount.size(); idc++) {
+                    if (id == idNames.get(idc)) {
+                        idCount.set(idc, idCount.get(idc) + 1);
+                        ins = true;
+                    }
+                }
+                if (!ins) {
+                    idNames.add(id);
+                    idCount.add(1);
+                }
+            } else {
+                idNames.add(id);
+                idCount.add(1);
+            }
+        }
+
+        int LARGEST = 0;
+        int lastBiggest = 0;
+        for (int i = 0; i < idCount.size(); i++) {
+            if (idCount.get(i) > lastBiggest) {
+                LARGEST = i;
+                lastBiggest = idCount.get(i);
+            }
+        }
+        int ID = idNames.get(LARGEST);
+
+        switch (ID) {
+            case 15:
+                name = "NOAA 19";
+                break;
+            case 13:
+                name = "NOAA 18";
+                break;
+            case 8:
+                name = "NOAA 15";
+                break;
+        }
+
+        return name;
     }
 }
