@@ -15,9 +15,11 @@ Features:
  - custom sized composites
  - composite of equalized images
  - Open file as an argument for application
+  - Build RGB images from 3 channels
+  - Add support for different color palettes
+  - Get the satellites name
+  - Cut off bad start and end
 
 TODO:
- - Build RGB images from 3 channels
- - Add support for different color palettes
- - Get the satellites name
- - Cut off bad start and end
+ - GUI
+
