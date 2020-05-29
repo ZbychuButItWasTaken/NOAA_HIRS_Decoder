@@ -2,7 +2,7 @@
 ### Decoder for decoding HIRS data From NOAA satellites
 
 ## Website
-Check out the project website for a tutorial: https://noaa_hirs_decoder.surge.sh
+Check out the project website for a tutorial: https://noaa_hirs_decoder.surge.sh  
 You can join our discord server: https://discord.gg/Ct2vzGK
 
 # Features
