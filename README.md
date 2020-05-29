@@ -23,4 +23,5 @@ Check out the project website for a tutorial: https://noaa_hirs_decoder.surge.sh
 
 # TODO
  - GUI
+ - Cloud top height approximation
 
