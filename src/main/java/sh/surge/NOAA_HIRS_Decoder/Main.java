@@ -433,6 +433,7 @@ public class Main {
                         rgbImage = new BufferedImage(56, image.getHeight(), BufferedImage.TYPE_INT_RGB);
                     }else{
                         image = crop(image, false, firstGoodLine, croppedImgH);
+
                     }
                 }
 
@@ -1149,13 +1150,13 @@ public class Main {
         SimpleDateFormat dateFormat = new SimpleDateFormat(timeFormat, Locale.forLanguageTag(timeLanguage));
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        int hours = (int) (mili / 3600000) - 12;
+        int hours = (int) (mili / 3600000) - 24;
         calendar.set(Calendar.HOUR, hours);
-        int minutes = (int) ((mili - (hours + 12) * 3600000) / 60000);
+        int minutes = (int) ((mili - (hours + 24) * 3600000) / 60000);
         calendar.set(Calendar.MINUTE, minutes);
-        int seconds = (int) ((mili - minutes * 60000 - (hours + 12) * 3600000) / 1000);
+        int seconds = (int) ((mili - minutes * 60000 - (hours + 24) * 3600000) / 1000);
         calendar.set(Calendar.SECOND, seconds);
-        int millis = (int) (mili - seconds * 1000 - minutes * 60000 - (hours + 12) * 3600000);
+        int millis = (int) (mili - seconds * 1000 - minutes * 60000 - (hours + 24) * 3600000);
         calendar.set(Calendar.MILLISECOND, millis);
 
 
