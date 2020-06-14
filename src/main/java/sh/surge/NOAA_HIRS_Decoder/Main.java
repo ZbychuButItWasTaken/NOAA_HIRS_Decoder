@@ -1016,13 +1016,17 @@ public class Main {
             for (int column : COLUMNS) {
                 cell = row.getCell(column);
 
-                switch (cell.getCellType()) {
-                    case NUMERIC:
-                        hexFrames.add(String.valueOf((int) cell.getNumericCellValue()));
-                        break;
-                    case STRING:
-                        hexFrames.add(cell.getStringCellValue());
-                        break;
+                if (cell == null){
+                    hexFrames.add("00");
+                }else {
+                    switch (cell.getCellType()) {
+                        case NUMERIC:
+                            hexFrames.add(String.valueOf((int) cell.getNumericCellValue()));
+                            break;
+                        case STRING:
+                            hexFrames.add(cell.getStringCellValue());
+                            break;
+                    }
                 }
             }
             StringBuilder frame = new StringBuilder();
@@ -1041,7 +1045,7 @@ public class Main {
             frames.add(frame.toString());
             hexFrames.clear();
             System.out.print('\r');
-            System.out.print(generateFancyProgressBar(100*cnt/numOfLines + 1));
+            System.out.print(generateFancyProgressBar(100 * cnt / numOfLines + 1));
 
             rowNum++;
             cnt++;
