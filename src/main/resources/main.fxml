@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sh.surge.NOAA_HIRS_Decoder.GUI.Gui_main">
+   <children>
+      <Button fx:id="fileSelect" layoutX="408.0" layoutY="200.0" mnemonicParsing="false" onAction="#select_file" prefHeight="35.0" prefWidth="95.0" text="Select file" />
+      <TextField fx:id="path" layoutX="104.0" layoutY="205.0" prefHeight="25.0" prefWidth="281.0" />
+      <Button layoutX="241.0" layoutY="269.0" mnemonicParsing="false" onAction="#start_decoding" prefHeight="64.0" prefWidth="118.0" text="Start">
+         <font>
+            <Font size="32.0" />
+         </font></Button>
+      <Text fill="RED" layoutX="23.0" layoutY="327.0" strokeType="OUTSIDE" strokeWidth="0.0" text="-------&gt;" wrappingWidth="202.03711241483688">
+         <font>
+            <Font size="58.0" />
+         </font>
+      </Text>
+      <Text fill="RED" layoutX="315.0" layoutY="465.0" rotate="-131.2" strokeType="OUTSIDE" strokeWidth="0.0" text="-------&gt;" wrappingWidth="202.03711241483688">
+         <font>
+            <Font size="58.0" />
+         </font>
+      </Text>
+      <Text fill="RED" layoutX="109.0" layoutY="465.0" rotate="-58.4" strokeType="OUTSIDE" strokeWidth="0.0" text="-------&gt;" wrappingWidth="202.03711241483688">
+         <font>
+            <Font size="58.0" />
+         </font>
+      </Text>
+      <Text fill="RED" layoutX="336.0" layoutY="212.0" rotate="123.7" strokeType="OUTSIDE" strokeWidth="0.0" text="-------&gt;" wrappingWidth="202.03711241483688">
+         <font>
+            <Font size="58.0" />
+         </font>
+      </Text>
+      <Text fill="RED" layoutX="49.0" layoutY="202.0" rotate="41.6" strokeType="OUTSIDE" strokeWidth="0.0" text="-------&gt;" wrappingWidth="202.03711241483688">
+         <font>
+            <Font size="58.0" />
+         </font>
+      </Text>
+      <Text fill="RED" layoutX="370.0" layoutY="325.0" strokeType="OUTSIDE" strokeWidth="0.0" text="&lt;-------">
+         <font>
+            <Font size="58.0" />
+         </font>
+      </Text>
+      <Text layoutX="75.0" layoutY="94.0" strokeType="OUTSIDE" strokeWidth="0.0" text="NOAA HIRS Decoder">
+         <font>
+            <Font size="49.0" />
+         </font>
+      </Text>
+   </children>
+</AnchorPane>

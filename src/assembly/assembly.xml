@@ -22,7 +22,7 @@
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>*.exe</include>
-                <include>*-jar-with-dependencies.jar</include>
+                <include>*.jar</include>
             </includes>
         </fileSet>
     </fileSets>

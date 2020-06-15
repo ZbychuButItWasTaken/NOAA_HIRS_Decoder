@@ -204,12 +204,35 @@
                         <configuration>
                             <headerType>console</headerType>
                             <outfile>target/NOAA_HIRS_Decoder.exe</outfile>
-                            <jar>target/NOAA_HIRS_Decoder-${project.version}-jar-with-dependencies-and-exclude-classes.jar</jar>
+                            <jar>target/NOAA_HIRS_Decoder-${project.version}-jar-with-dependencies.jar</jar>
                             <icon>src/main/resources/icon.ico</icon>
                             <errTitle>NOAA_HIRS_Decoder</errTitle>
                             <chdir>.</chdir>
                             <classPath>
                                 <mainClass>sh.surge.NOAA_HIRS_Decoder.Main</mainClass>
+                                <addDependencies>false</addDependencies>
+                                <preCp>anything</preCp>
+                            </classPath>
+                            <jre>
+                                <minVersion>8.0.0</minVersion>
+                            </jre>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>l4j-clui_GUI</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>target/NOAA_HIRS_Decoder_GUI.exe</outfile>
+                            <jar>target/NOAA_HIRS_Decoder-${project.version}-jar-with-dependencies-GUI.jar</jar>
+                            <icon>src/main/resources/icon.ico</icon>
+                            <errTitle>NOAA_HIRS_Decoder</errTitle>
+                            <chdir>.</chdir>
+                            <classPath>
+                                <mainClass>sh.surge.NOAA_HIRS_Decoder.GUI.Run</mainClass>
                                 <addDependencies>false</addDependencies>
                                 <preCp>anything</preCp>
                             </classPath>
