@@ -449,6 +449,7 @@ public class Main {
         String[] composizes = composize.split("x");
         compoSizeW = Integer.parseInt(composizes[0]);
         compoSizeH = Integer.parseInt(composizes[1]);
+        if (compoSizeW*compoSizeH!=20) System.out.println("Warning: Invalid composition size! This may result in unexpected program behavior!" + compoSizeW*compoSizeH);
 
         String savehiscompo = ini.get("histogram_equalization", "save_histogram_compo");
         if (savehiscompo.equals("yes")) saveHisCombo = true;
@@ -469,6 +470,7 @@ public class Main {
         String[] hiscomposizes = hiscomposize.split("x");
         hisCompoSizeW = Integer.parseInt(hiscomposizes[0]);
         hisCompoSizeH = Integer.parseInt(hiscomposizes[1]);
+        if (hisCompoSizeW*hisCompoSizeH!=20) System.out.println("Warning: Invalid histogram equalized composition size! This may result in unexpected program behavior!" + hisCompoSizeW*hisCompoSizeH);
 
         String averagepixels = ini.get("main", "average_pixels");
         if (averagepixels.equals("yes")) averagePixels = true;
