@@ -6,6 +6,9 @@ Check out the project website for a tutorial: https://noaa_hirs_decoder.surge.sh
 You can join our discord server: https://discord.gg/Ct2vzGK
 
 # Features
+
+ - GUI *This branch is experimental GUI. The GUI is under heavy development!  ***It is WIP!!!***
+
  - decode HIRS data to pictures
  - histogram equalization
  - multispectral analysis with brightness values
@@ -23,6 +26,5 @@ You can join our discord server: https://discord.gg/Ct2vzGK
   - Cut off bad start and end
 
 # TODO
- - GUI
  - ~~Cloud top height approximation~~ Isn't possible because of the degraded performance of HIRS instrument
 
