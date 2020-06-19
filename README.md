@@ -7,7 +7,7 @@ You can join our discord server: https://discord.gg/Ct2vzGK
 
 # Features
 
- - GUI *This branch is experimental GUI. The GUI is under heavy development!  ***It is WIP!!!***
+ - GUI *This branch is experimental GUI. The GUI is under heavy development!*  ***It is WIP!!!***
 
  - decode HIRS data to pictures
  - histogram equalization
