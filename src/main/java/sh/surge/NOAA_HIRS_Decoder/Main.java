@@ -72,6 +72,7 @@ public class Main {
     private static int averagingThreshold;
     private static int firstGoodLine, croppedImgH;
     private static String name;
+    private static boolean silentMode;
 
 
     public static void main(String[] args) {
@@ -84,23 +85,23 @@ public class Main {
             }else {
                 readIni("config.ini");
             }
-            System.out.println("Loading file....");
+            if (!silentMode) System.out.println("Loading file....");
             File inputFile;
             if (args.length > 0 && args[0].endsWith(".txt")) {
                 inputFile = new File(args[0]);
-                System.out.println("File loaded from argument path.");
+                if (!silentMode) System.out.println("File loaded from argument path.");
             } else if (args.length > 1 && args[1].endsWith(".txt")) {
                 inputFile = new File(args[1]);
-                System.out.println("File loaded from argument path.");
+                if (!silentMode) System.out.println("File loaded from argument path.");
             }else {
                 inputFile = getLastModified(input);
             }
             if (inputFile != null && args.length == 0) {
-                System.out.println("Loaded newest file.");
+                if (!silentMode) System.out.println("Loaded newest file.");
             }
 
             if (inputFile == null) {
-                System.out.println("No input file found. Aborting");
+                if (!silentMode) System.out.println("No input file found. Aborting");
                 try {
                     TimeUnit.SECONDS.sleep(5);
                 } catch (InterruptedException e) {
@@ -108,13 +109,13 @@ public class Main {
                 }
                 Runtime.getRuntime().exit(0);
             }
-            System.out.println("Newest file found: " + inputFile.getName());
-            System.out.println("OK!" + '\n');
+            if (!silentMode) System.out.println("Newest file found: " + inputFile.getName());
+            if (!silentMode) System.out.println("OK!" + '\n');
             decode(inputFile);
             makeImages();
 
         } catch (Exception e) {
-            System.out.println("Program encountered an unhandled Exception:");
+            if (!silentMode) System.out.println("Program encountered an unhandled Exception:");
             e.printStackTrace();
             try {
                 TimeUnit.SECONDS.sleep(5);
@@ -165,7 +166,7 @@ public class Main {
             height = Cheight;
             firstGood = CfirstGood;
         }
-        System.out.println(height);
+        if (!silentMode) System.out.println(height);
 
         return inImage.getSubimage(0, firstGood, 56, height);
     }
@@ -225,7 +226,7 @@ public class Main {
 
     private static void saveImg(String path, String type, BufferedImage image) {
         File outputfile = new File(path);
-        if (outputfile.mkdirs()) System.out.println("Directory created!");
+        if (outputfile.mkdirs() && !silentMode) System.out.println("Directory created!");
         if (saveType.equals("jpg")) {
             JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
             jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
@@ -235,16 +236,16 @@ public class Main {
             try {
                 writer.setOutput(new FileImageOutputStream(outputfile));
                 writer.write(null, new IIOImage(image, null, null), jpegParams);
-                System.out.println("Saved " + path);
+                if (!silentMode) System.out.println("Saved " + path);
             } catch (IOException e) {
-                System.out.println("Failed to save!" + path);
+                if (!silentMode) System.out.println("Failed to save!" + path);
             }
         } else {
             try {
                 ImageIO.write(image, type, outputfile);
-                System.out.println("Saved " + path);
+                if (!silentMode) System.out.println("Saved " + path);
             } catch (IOException e) {
-                System.out.println("Failed to save!" + path);
+                if (!silentMode) System.out.println("Failed to save!" + path);
             }
         }
     }
@@ -295,7 +296,7 @@ public class Main {
         try {
             ini = new Wini(new File(fileName));
         } catch (IOException e) {
-            System.out.println("Configuration file not found! Aborting!");
+            if (!silentMode) System.out.println("Configuration file not found! Aborting!");
             try {
                 TimeUnit.SECONDS.sleep(3);
             } catch (InterruptedException ex) {
@@ -458,7 +459,7 @@ public class Main {
         String[] composizes = composize.split("x");
         compoSizeW = Integer.parseInt(composizes[0]);
         compoSizeH = Integer.parseInt(composizes[1]);
-        if (compoSizeW*compoSizeH!=20) System.out.println("Warning: Invalid composition size! This may result in unexpected program behavior!" + compoSizeW*compoSizeH);
+        if (compoSizeW*compoSizeH!=20 && !silentMode) System.out.println("Warning: Invalid composition size! This may result in unexpected program behavior!" + compoSizeW*compoSizeH);
 
         String savehiscompo = ini.get("histogram_equalization", "save_histogram_compo");
         if (savehiscompo.equals("yes")) saveHisCombo = true;
@@ -479,7 +480,7 @@ public class Main {
         String[] hiscomposizes = hiscomposize.split("x");
         hisCompoSizeW = Integer.parseInt(hiscomposizes[0]);
         hisCompoSizeH = Integer.parseInt(hiscomposizes[1]);
-        if (hisCompoSizeW*hisCompoSizeH!=20) System.out.println("Warning: Invalid histogram equalized composition size! This may result in unexpected program behavior!" + hisCompoSizeW*hisCompoSizeH);
+        if (hisCompoSizeW*hisCompoSizeH!=20 && !silentMode) System.out.println("Warning: Invalid histogram equalized composition size! This may result in unexpected program behavior!" + hisCompoSizeW*hisCompoSizeH);
 
         String averagepixels = ini.get("main", "average_pixels");
         if (averagepixels.equals("yes")) averagePixels = true;
@@ -505,6 +506,7 @@ public class Main {
         badLineThreshold = Integer.parseInt(ini.get("main", "crop_threshold"));
         averagingThreshold = Integer.parseInt(ini.get("main", "averaging_threshold"));
 
+        silentMode = ini.get("main", "silent_mode").equals("yes");
     }
 
     private static int getNum(int i) {
@@ -834,7 +836,7 @@ public class Main {
     }
 
     public static void decode(File inputFile) throws IOException {
-        System.out.println("Converting data....");
+        if (!silentMode) System.out.println("Converting data....");
         name = inputFile.getName().substring(0, inputFile.getName().length() - 4);
 
         XSSFSheet sheet = workbook.createSheet("Data");
@@ -857,18 +859,18 @@ public class Main {
                 cell.setCellValue(line.get(i));
             }
             int prc = 100 * j / numOfLines + 1;
-            System.out.print('\r');
-            System.out.print(generateFancyProgressBar(prc));
+            if (!silentMode) System.out.print('\r');
+            if (!silentMode) System.out.print(generateFancyProgressBar(prc));
             j++;
         }
-        System.out.print('\n');
+        if (!silentMode) System.out.print('\n');
 
 
         ArrayList<String> hexFrames = new ArrayList<>();
 
-        System.out.println("OK!" + '\n');
+        if (!silentMode) System.out.println("OK!" + '\n');
 
-        System.out.println("Readnig data....");
+        if (!silentMode) System.out.println("Readnig data....");
         // For each Row.
         int rowNum = 0;
         File tmp = new File("Time.tmp");
@@ -880,7 +882,7 @@ public class Main {
             } else {
                 timefile = new File(timePath1);
             }
-            if (timefile.mkdirs()) System.out.println("Directory created!");
+            if (timefile.mkdirs() && !silentMode) System.out.println("Directory created!");
             if (timeName) {
                 timefile = new File(timePath1 + name + timePath2 + "stat.txt");
             } else {
@@ -1055,25 +1057,25 @@ public class Main {
             }
             frames.add(frame.toString());
             hexFrames.clear();
-            System.out.print('\r');
-            System.out.print(generateFancyProgressBar(100 * cnt / numOfLines + 1));
+            if (!silentMode) System.out.print('\r');
+            if (!silentMode) System.out.print(generateFancyProgressBar(100 * cnt / numOfLines + 1));
 
             rowNum++;
             cnt++;
         }
-        System.out.print('\n');
+        if (!silentMode) System.out.print('\n');
 
         String spacecraftName = getSpacecraftName();
-        System.out.println(spacecraftName);
+        if (!silentMode) System.out.println(spacecraftName);
         if (saveName) out.println('\n' + spacecraftName);
 
         out.close();
         if (tmp.delete()) {
-            System.out.println("Tmp files deleted!");
+            if (!silentMode) System.out.println("Tmp files deleted!");
         }
-        System.out.println("OK, found " + frmCnt.size() + " lines." + '\n');
+        if (!silentMode) System.out.println("OK, found " + frmCnt.size() + " lines." + '\n');
 
-        System.out.println("Checking for missing data....");
+        if (!silentMode) System.out.println("Checking for missing data....");
         for (int i = 0; i < frmCnt.size(); i++) {
             if (frmCnt.get(i) == 0 || frmCnt.get(i) == 64 || frmCnt.get(i) == 128 || frmCnt.get(i) == 192 || frmCnt.get(i) == 256) {
                 if (frmCnt.get(i) % 64 == mirrorPos.get(i)) {
@@ -1089,7 +1091,7 @@ public class Main {
         for (int i = 1; i < starts.size(); i++) {
             int missingLines = 0;
             if (frmCnt.get(starts.get(i)) - 64 != frmCnt.get(starts.get(i - 1)) && frmCnt.get(starts.get(i)) != 0) {
-                System.out.println("Found missing data at: " + i + " (" + frmCnt.get(starts.get(i - 1)) + "; " + frmCnt.get(starts.get(i)) + "; " + majorFrmCnt.get(starts.get(i - 1)) + "; " + majorFrmCnt.get(starts.get(i)) + ")");
+                if (!silentMode) System.out.println("Found missing data at: " + i + " (" + frmCnt.get(starts.get(i - 1)) + "; " + frmCnt.get(starts.get(i)) + "; " + majorFrmCnt.get(starts.get(i - 1)) + "; " + majorFrmCnt.get(starts.get(i)) + ")");
                 if (majorFrmCnt.get(starts.get(i - 1)).equals(majorFrmCnt.get(starts.get(i)))) {
                     missingLines = (frmCnt.get(starts.get(i)) - frmCnt.get(starts.get(i - 1))) / 64 - 1;
                 } else if (starts.get(i - 1) < frmCnt.get(starts.get(i))) {
@@ -1101,7 +1103,7 @@ public class Main {
             totalMissingLines += missingLines;
 
         }
-        System.out.println();
+        if (!silentMode) System.out.println();
 
     }
 
@@ -1352,7 +1354,7 @@ public class Main {
                 } else {
                     file = new File(xlsxP1);
                 }
-                if (file.mkdirs()) System.out.println("Directory created!");
+                if (file.mkdirs() && !silentMode) System.out.println("Directory created!");
 
                 if (xlsxName) {
                     file = new File(xlsxP1 + name + xlsxP2 + name + ".xlsx");
