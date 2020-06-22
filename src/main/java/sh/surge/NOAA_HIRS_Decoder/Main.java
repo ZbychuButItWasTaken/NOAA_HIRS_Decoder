@@ -77,13 +77,22 @@ public class Main {
     public static void main(String[] args) {
         //System.out.println(Arrays.toString(args));
         try {
-            readIni();
+            if (args.length > 0 && args[0].endsWith(".ini")) {
+                readIni(args[0]);
+            } else if (args.length > 1 && args[1].endsWith(".ini")) {
+                readIni(args[1]);
+            }else {
+                readIni("config.ini");
+            }
             System.out.println("Loading file....");
             File inputFile;
-            if (args.length > 0) {
+            if (args.length > 0 && args[0].endsWith(".txt")) {
                 inputFile = new File(args[0]);
                 System.out.println("File loaded from argument path.");
-            } else {
+            } else if (args.length > 1 && args[1].endsWith(".txt")) {
+                inputFile = new File(args[1]);
+                System.out.println("File loaded from argument path.");
+            }else {
                 inputFile = getLastModified(input);
             }
             if (inputFile != null && args.length == 0) {
@@ -280,11 +289,11 @@ public class Main {
         saveImg(msaPath1 + name + msaPath2 + "msa." + saveType, saveType, msaImg);
     }
 
-    private static void readIni() {
+    private static void readIni(String fileName) {
         Wini ini = null;
 
         try {
-            ini = new Wini(new File("config.ini"));
+            ini = new Wini(new File(fileName));
         } catch (IOException e) {
             System.out.println("Configuration file not found! Aborting!");
             try {
