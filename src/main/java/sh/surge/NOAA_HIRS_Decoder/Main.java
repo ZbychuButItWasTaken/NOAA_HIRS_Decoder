@@ -78,12 +78,23 @@ public class Main {
     public static void main(String[] args) {
         //System.out.println(Arrays.toString(args));
         try {
-            if (args.length > 0 && args[0].endsWith(".ini")) {
-                readIni(args[0]);
-            } else if (args.length > 1 && args[1].endsWith(".ini")) {
-                readIni(args[1]);
-            }else {
-                readIni("config.ini");
+            try {
+                if (args.length > 0 && args[0].endsWith(".ini")) {
+                    readIni(args[0]);
+                } else if (args.length > 1 && args[1].endsWith(".ini")) {
+                    readIni(args[1]);
+                } else {
+                    readIni("config.ini");
+                }
+            }catch(NullPointerException e){
+                System.out.println("Program encountered an exception wile reading the configuration!");
+                e.printStackTrace();
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+                Runtime.getRuntime().exit(1);
             }
             if (!silentMode) System.out.println("Loading file....");
             File inputFile;
@@ -115,7 +126,7 @@ public class Main {
             makeImages();
 
         } catch (Exception e) {
-            if (!silentMode) System.out.println("Program encountered an unhandled Exception:");
+            System.out.println("Program encountered an unhandled Exception:");
             e.printStackTrace();
             try {
                 TimeUnit.SECONDS.sleep(5);
