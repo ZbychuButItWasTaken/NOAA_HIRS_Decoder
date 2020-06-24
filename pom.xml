@@ -112,15 +112,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.4</version>
-                <configuration>
-                    <mainClass>sh/surge/NOAA_HIRS_Decoder/GUI/Gui_main</mainClass>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
@@ -199,6 +190,7 @@
                             <jre>
                                 <minVersion>8.0.0</minVersion>
                             </jre>
+                            <downloadUrl> </downloadUrl>
                         </configuration>
                     </execution>
                 </executions>
