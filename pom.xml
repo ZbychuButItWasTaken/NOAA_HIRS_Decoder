@@ -60,6 +60,13 @@
             <artifactId>javafx-graphics</artifactId>
             <version>14</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.beust/jcommander -->
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>1.78</version>
+        </dependency>
+
 
     </dependencies>
 

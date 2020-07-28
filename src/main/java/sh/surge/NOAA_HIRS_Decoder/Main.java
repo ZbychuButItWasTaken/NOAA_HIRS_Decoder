@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package sh.surge.NOAA_HIRS_Decoder;
 
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -37,6 +39,7 @@ import java.awt.image.WritableRaster;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
@@ -45,6 +48,7 @@ public class Main {
     private static final ArrayList<String> frames = new ArrayList<>();
     private static final ArrayList<Integer> frmCnt = new ArrayList<>();
     private static final ArrayList<String> framePixels = new ArrayList<>();
+    private static final ArrayList<Character> validDataBit = new ArrayList<>();
     private static final ArrayList<Integer> starts = new ArrayList<>();
     private static final ArrayList<Integer> mirrorPos = new ArrayList<>();
     private static final XSSFWorkbook workbook = new XSSFWorkbook();
@@ -75,19 +79,61 @@ public class Main {
     private static boolean silentMode;
 
 
-    public static void main(String[] args) {
+    @Parameter(names = {"-i", "--input"}, description = "Input File or Directory")
+    private static String inputParam;
+
+    @Parameter(names = {"-o", "--output"}, description = "Output directory")
+    private static String outputParam;
+
+    @Parameter(names = {"-c", "--config"}, description = "Configuration file")
+    private static String configParam;
+
+    @Parameter(names = {"-s", "--save_compo"}, description = "Save composition of all channels", arity = 1)
+    private static boolean saveCompoParam;
+
+    @Parameter(names = {"-a", "--average_pixels"}, description = "Average neighboring pixels", arity = 1)
+    private static boolean averagePixelsParam;
+
+    @Parameter(names = {"-e", "--silent_mode"}, description = "Disables console output", arity = 1)
+    private static boolean silentModeParam;
+
+    @Parameter(names = {"-h", "--help"}, description = "Display this list", help = true)
+    private boolean help = false;
+
+    public static void main(String[] argv) {
+        Main main = new Main();
+        //JCommander.newBuilder().addObject(main).build().parse(argv);
+        JCommander jCommander = JCommander.newBuilder().addObject(main).build();
+        jCommander.parse(argv);
+        //System.out.println(outputParam + ", " + inputParam + ", " + configParam + ", " + saveCompoParam + ", " + averagePixelsParam +", " + silentModeParam);
+
+        if (main.help){
+            jCommander.usage();
+            return;
+        }
+
+        List<String> stringList = new ArrayList<>(Arrays.asList(argv));
+
+        if (stringList.contains("-s")||stringList.contains("--save_compo")){
+            saveCompo = saveCompoParam;
+        }
+        if (stringList.contains("-a")||stringList.contains("--average_pixels")){
+            averagePixels = averagePixelsParam;
+        }
+        if (stringList.contains("-e")||stringList.contains("--silent_mode")){
+            silentMode = silentModeParam;
+        }
+
         //System.out.println(Arrays.toString(args));
         try {
             try {
-                if (args.length > 0 && args[0].endsWith(".ini")) {
-                    readIni(args[0]);
-                } else if (args.length > 1 && args[1].endsWith(".ini")) {
-                    readIni(args[1]);
-                } else {
+                if(configParam != null){
+                    readIni(configParam);
+                }else{
                     readIni("config.ini");
                 }
-            }catch(NullPointerException e){
-                System.out.println("Program encountered an exception wile reading the configuration!");
+            } catch (NullPointerException e) {
+                System.out.println("Program encountered an exception wile reading the configuration! Aborting in 5s");
                 e.printStackTrace();
                 try {
                     TimeUnit.SECONDS.sleep(5);
@@ -97,31 +143,40 @@ public class Main {
                 Runtime.getRuntime().exit(1);
             }
             if (!silentMode) System.out.println("Loading file....");
-            File inputFile;
-            if (args.length > 0 && args[0].endsWith(".txt")) {
-                inputFile = new File(args[0]);
-                if (!silentMode) System.out.println("File loaded from argument path.");
-            } else if (args.length > 1 && args[1].endsWith(".txt")) {
-                inputFile = new File(args[1]);
-                if (!silentMode) System.out.println("File loaded from argument path.");
+            File inputFile = null;
+
+            if(inputParam != null){
+                if (inputParam.endsWith(".txt")){
+                    inputFile = new File(inputParam);
+                }else if (new File(inputParam).isDirectory()){
+                    inputFile = getLastModified(inputParam, ".txt");
+                }
             }else {
-                inputFile = getLastModified(input);
-            }
-            if (inputFile != null && args.length == 0) {
-                if (!silentMode) System.out.println("Loaded newest file.");
+                inputFile = getLastModified(input, ".txt");
             }
 
             if (inputFile == null) {
-                if (!silentMode) System.out.println("No input file found. Aborting");
+                if(!silentMode) System.out.println("No input file found. Aborting");
                 try {
                     TimeUnit.SECONDS.sleep(5);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Runtime.getRuntime().exit(0);
+                Runtime.getRuntime().exit(1);
             }
             if (!silentMode) System.out.println("Newest file found: " + inputFile.getName());
             if (!silentMode) System.out.println("OK!" + '\n');
+
+            if (outputParam != null){
+                out1 = outputParam;
+                if (outputParam.contains("[name]")) {
+                    int name = outputParam.indexOf("[name]");
+                    out1 = outputParam.substring(0, name);
+                    out2 = outputParam.substring(name + 6);
+                    outName = true;
+                }
+            }
+
             decode(inputFile);
             makeImages();
 
@@ -182,7 +237,7 @@ public class Main {
         return inImage.getSubimage(0, firstGood, 56, height);
     }
 
-    private static File getLastModified(String path) {
+    private static File getLastModified(String path, String extension) {
         File directory = new File(path);
         File[] files = directory.listFiles(File::isFile);
         long lastModifiedTime = Long.MIN_VALUE;
@@ -190,7 +245,7 @@ public class Main {
 
         if (files != null) {
             for (File file : files) {
-                if (file.lastModified() > lastModifiedTime) {
+                if (file.lastModified() > lastModifiedTime && file.getName().endsWith(extension)) {
                     chosenFile = file;
                     lastModifiedTime = file.lastModified();
                 }
@@ -470,7 +525,8 @@ public class Main {
         String[] composizes = composize.split("x");
         compoSizeW = Integer.parseInt(composizes[0]);
         compoSizeH = Integer.parseInt(composizes[1]);
-        if (compoSizeW*compoSizeH!=20 && !silentMode) System.out.println("Warning: Invalid composition size! This may result in unexpected program behavior!" + compoSizeW*compoSizeH);
+        if (compoSizeW * compoSizeH != 20 && !silentMode)
+            System.out.println("Warning: Invalid composition size! This may result in unexpected program behavior!" + compoSizeW * compoSizeH);
 
         String savehiscompo = ini.get("histogram_equalization", "save_histogram_compo");
         if (savehiscompo.equals("yes")) saveHisCombo = true;
@@ -491,7 +547,8 @@ public class Main {
         String[] hiscomposizes = hiscomposize.split("x");
         hisCompoSizeW = Integer.parseInt(hiscomposizes[0]);
         hisCompoSizeH = Integer.parseInt(hiscomposizes[1]);
-        if (hisCompoSizeW*hisCompoSizeH!=20 && !silentMode) System.out.println("Warning: Invalid histogram equalized composition size! This may result in unexpected program behavior!" + hisCompoSizeW*hisCompoSizeH);
+        if (hisCompoSizeW * hisCompoSizeH != 20 && !silentMode)
+            System.out.println("Warning: Invalid histogram equalized composition size! This may result in unexpected program behavior!" + hisCompoSizeW * hisCompoSizeH);
 
         String averagepixels = ini.get("main", "average_pixels");
         if (averagepixels.equals("yes")) averagePixels = true;
@@ -1040,9 +1097,9 @@ public class Main {
             for (int column : COLUMNS) {
                 cell = row.getCell(column);
 
-                if (cell == null){
+                if (cell == null) {
                     hexFrames.add("00");
-                }else {
+                } else {
                     switch (cell.getCellType()) {
                         case NUMERIC:
                             hexFrames.add(String.valueOf((int) cell.getNumericCellValue()));
@@ -1097,12 +1154,14 @@ public class Main {
 
         for (String frame : frames) {
             framePixels.add(frame.substring(26, 286));
+            validDataBit.add(frame.charAt(286));
         }
 
         for (int i = 1; i < starts.size(); i++) {
             int missingLines = 0;
             if (frmCnt.get(starts.get(i)) - 64 != frmCnt.get(starts.get(i - 1)) && frmCnt.get(starts.get(i)) != 0) {
-                if (!silentMode) System.out.println("Found missing data at: " + i + " (" + frmCnt.get(starts.get(i - 1)) + "; " + frmCnt.get(starts.get(i)) + "; " + majorFrmCnt.get(starts.get(i - 1)) + "; " + majorFrmCnt.get(starts.get(i)) + ")");
+                if (!silentMode)
+                    System.out.println("Found missing data at: " + i + " (" + frmCnt.get(starts.get(i - 1)) + "; " + frmCnt.get(starts.get(i)) + "; " + majorFrmCnt.get(starts.get(i - 1)) + "; " + majorFrmCnt.get(starts.get(i)) + ")");
                 if (majorFrmCnt.get(starts.get(i - 1)).equals(majorFrmCnt.get(starts.get(i)))) {
                     missingLines = (frmCnt.get(starts.get(i)) - frmCnt.get(starts.get(i - 1))) / 64 - 1;
                 } else if (starts.get(i - 1) < frmCnt.get(starts.get(i))) {
@@ -1151,7 +1210,7 @@ public class Main {
                     try {
                         x = mirrorPos.get(starts.get(line) + o - 1);
 
-                        if (x < 56 && x != starts.get(line + 1)) {
+                        if (x < 56 && validDataBit.get(starts.get(line) + o - 1) == '1') {
 
                             boolean negative = false;
                             if (framePixels.get(starts.get(line) + o).charAt(13 * i) == '0') negative = true;
@@ -1387,21 +1446,21 @@ public class Main {
         StringBuilder buff = new StringBuilder();
         buff.append("[");
 
-        for (int i = 0; i < part && part<11; i++) {
+        for (int i = 0; i < part && part < 11; i++) {
             buff.append('=');
         }
-        for (int i = 0; i < 10-part && part<11; i++) {
+        for (int i = 0; i < 10 - part && part < 11; i++) {
             buff.append(' ');
         }
-        if (part>10) buff.append("==========");
+        if (part > 10) buff.append("==========");
         buff.append(percent);
         buff.append("%");
-        if (part<10) buff.append("          ");
+        if (part < 10) buff.append("          ");
 
         for (int i = 10; i < part; i++) {
             buff.append('=');
         }
-        for (int i = 0; i < 20 - part && part>9; i++) {
+        for (int i = 0; i < 20 - part && part > 9; i++) {
             buff.append(' ');
         }
         buff.append(']');
