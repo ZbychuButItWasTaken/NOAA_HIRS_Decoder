@@ -25,6 +25,7 @@ You can join our discord server: https://discord.gg/Ct2vzGK
 # TODO
  - GUI
  - ~~Cloud top height approximation~~ Isn't possible because of the degraded performance of HIRS instrument
+ - Add MetOp's HIRS support and possibly even FY's IRAS
  
 # Additional info
 this program uses and includes following libraries: ini4j, Apache POI, openjfx, launch4j and JCommander.
