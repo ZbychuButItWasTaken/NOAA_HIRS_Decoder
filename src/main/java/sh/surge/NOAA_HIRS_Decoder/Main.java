@@ -938,7 +938,7 @@ public class Main {
 
         if (!silentMode) System.out.println("OK!" + '\n');
 
-        if (!silentMode) System.out.println("Readnig data....");
+        if (!silentMode) System.out.println("Reading data....");
         // For each Row.
         int rowNum = 0;
         File tmp = new File("Time.tmp");
