@@ -964,13 +964,17 @@ public class Main {
             Cell cell = row.getCell(5);
             char fb = '0';
 
-            switch (cell.getCellType()) {
-                case NUMERIC:
-                    fb = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).length() - 1);
-                    break;
-                case STRING:
-                    fb = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).length() - 1);
-                    break;
+            try {
+                switch (cell.getCellType()) {
+                    case NUMERIC:
+                        fb = Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt("" + (int) cell.getNumericCellValue(), 16)).length() - 1);
+                        break;
+                    case STRING:
+                        fb = Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).charAt(Integer.toBinaryString(Integer.parseInt(cell.getStringCellValue(), 16)).length() - 1);
+                        break;
+                }
+            }catch (NullPointerException e){
+                fb = '0';
             }
 
             cell = row.getCell(6);
