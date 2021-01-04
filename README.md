@@ -22,6 +22,15 @@ You can join our discord server: https://discord.gg/Ct2vzGK
   - Get the satellites name
   - Cut off bad start and end
 
+# Building from source
+First install `maven`.
+```
+git clone https://github.com/ZbychuButItWasTaken/NOAA_HIRS_Decoder.git
+cd NOAA_HIRS_Decoder
+mvn compile
+mvn package
+```
+
 # TODO
  - GUI
  - ~~Cloud top height approximation~~ Isn't possible because of the degraded performance of HIRS instrument
